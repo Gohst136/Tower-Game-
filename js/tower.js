@@ -23,7 +23,8 @@
     const regenFlat = lvl(w, "regen") * 0.4;
     const regenMult = Math.pow(1.05, lvl(lab, "labRegen"));
     const cashMult = Math.pow(1.1, lvl(w, "cash")) * Math.pow(1.05, lvl(lab, "labCash"));
-    const coinMult = Math.pow(1.05, lvl(lab, "labCoin")) * Math.pow(1.08, lvl(talents, "talentCoin"));
+    const planet = State.activePlanetDef(state);
+    const coinMult = Math.pow(1.05, lvl(lab, "labCoin")) * Math.pow(1.08, lvl(talents, "talentCoin")) * planet.coinMult;
 
     return {
       damage: BASE.damage * dmgMult,
@@ -33,6 +34,8 @@
       regen: (BASE.regen + regenFlat) * regenMult,
       cashMult,
       coinMult,
+      multishot: planet.multishot,
+      spawnRateMult: planet.spawnRateMult,
       startingCash: lvl(lab, "labStart") * 25 + lvl(talents, "talentStartCash") * 50,
     };
   }

@@ -20,7 +20,13 @@
   // render layer zooms out to keep this ever-growing world radius fitting
   // the fixed screen size (see _zoomScale).
   const RANGE_SPAWN_BUFFER = 60;
-  const MIN_ZOOM = 0.32;
+  // Floor for how small on-screen sprites are allowed to get once zoom has
+  // shrunk a lot (extreme Range levels) - keeps them visible/tappable
+  // instead of vanishing, without capping the zoom math itself (that used
+  // to make enemies spawn outside the visible circle once Range grew past
+  // whatever radius the old fixed MIN_ZOOM could still fit on screen).
+  const MIN_SPRITE_PX = 3;
+  const MIN_TOWER_PX = 8;
 
   const Game = {
     state: null,
@@ -200,6 +206,13 @@
       return State.ABILITY_DEFS.filter((d) => State.isAbilityUnlocked(d.id, this.state.talents));
     },
 
+    selectPlanet(id) {
+      const def = State.PLANET_DEFS.find((d) => d.id === id);
+      if (!def || !State.isPlanetUnlocked(def, this.state)) return false;
+      this.state.activePlanet = id;
+      return true;
+    },
+
     // Deep reset: trades accumulated Coins + Lab levels for a lasting Cores
     // currency spent on Talents, which survive future Ascensions. Returns
     // the number of Cores earned, or 0 if nothing new was available yet.
@@ -271,7 +284,7 @@
       while (this.spawnQueue.length > 0 && this.spawnTimer <= 0) {
         const type = this.spawnQueue.shift();
         this.entities.push(this._spawnEnemy(type, s.run.wave, stats, this.currentElite));
-        this.spawnTimer += Enemies.spawnIntervalForWave(s.run.wave, this.currentElite);
+        this.spawnTimer += Enemies.spawnIntervalForWave(s.run.wave, this.currentElite) * stats.spawnRateMult;
       }
 
       // --- movement & impacts ---
@@ -314,13 +327,13 @@
       // --- attack --- (while-loop, same reasoning as spawning above)
       this.attackCooldown -= dt;
       while (this.attackCooldown <= 0 && this.entities.length > 0) {
-        const target = this._pickTarget(stats);
-        if (target) {
+        const targets = this._pickTargets(stats, stats.multishot);
+        for (const target of targets) {
           this._applyDamage(target, stats.damage);
           this.flashes.push({ x: target.x, y: target.y, alpha: 1 });
-          Sfx.playShot();
           if (target.hp <= 0) this._killEnemy(target, stats);
         }
+        if (targets.length > 0) Sfx.playShot();
         this.attackCooldown += stats.attackInterval;
       }
 
@@ -384,18 +397,21 @@
       }
     },
 
-    _pickTarget(stats) {
+    // Returns up to `count` in-range entities ordered by the active target
+    // mode (nearest/strongest/weakest first) - `count` is 1 outside of the
+    // multishot Planeten perk, so this also replaces the old single-target
+    // picker.
+    _pickTargets(stats, count) {
       const mode = this.state.targetMode || "nearest";
-      let target = null;
-      let bestScore = mode === "strongest" ? -Infinity : Infinity;
+      const candidates = [];
       for (const e of this.entities) {
         const d = Math.hypot(e.x, e.y);
         if (d > stats.range) continue;
         const score = mode === "nearest" ? d : mode === "strongest" ? e.maxHp : e.hp;
-        const better = mode === "strongest" ? score > bestScore : score < bestScore;
-        if (better) { bestScore = score; target = e; }
+        candidates.push({ e, score });
       }
-      return target;
+      candidates.sort((a, b) => (mode === "strongest" ? b.score - a.score : a.score - b.score));
+      return candidates.slice(0, count).map((c) => c.e);
     },
 
     _applyDamage(target, amount) {
@@ -633,7 +649,7 @@
 
     _zoomScale(stats) {
       const zoom = this._availableScreenRadius() / this._worldRadius(stats);
-      return Utils.clamp(zoom, MIN_ZOOM, 1);
+      return Math.min(zoom, 1);
     },
 
     // Returns entities/flashes translated into screen-space for the renderer.
@@ -650,12 +666,12 @@
         time: this.time,
         cx, cy,
         zoom,
-        towerRadius: TOWER_RADIUS * zoom,
+        towerRadius: Math.max(MIN_TOWER_PX, TOWER_RADIUS * zoom),
         range: stats.range * zoom,
         elite: this.currentElite,
         boss: boss ? { hp: boss.hp, maxHp: boss.maxHp } : null,
         shieldActive: this.towerShield > 0,
-        enemies: this.entities.map((e) => ({ ...e, ...toScreen(e.x, e.y), radius: Math.max(3, e.radius * zoom) })),
+        enemies: this.entities.map((e) => ({ ...e, ...toScreen(e.x, e.y), radius: Math.max(MIN_SPRITE_PX, e.radius * zoom) })),
         flashes: this.flashes.map((f) => ({ ...f, ...toScreen(f.x, f.y) })),
         particles: this.particles.map((p) => ({ ...p, ...toScreen(p.x, p.y), alpha: Math.max(0, p.life / p.maxLife) })),
         rings: this.rings.map((r) => ({ ...r, ...toScreen(r.x, r.y), radius: r.radius * zoom })),

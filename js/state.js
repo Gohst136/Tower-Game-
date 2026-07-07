@@ -60,6 +60,18 @@
     { id: "talentAbilityRepair", name: "Reparatur-Kern", icon: "💚", desc: "Schaltet die Fähigkeit Notreparatur frei", baseCost: 6, costMult: 1, maxLevel: 1, ability: "repair" },
   ];
 
+  // Planeten: alternate home planets, unlocked permanently by Ascension
+  // count. Each harder tier trades more danger (faster enemy spawns) for
+  // a combat perk (extra simultaneous targets) and a flat bonus to Kristalle
+  // and Kerne earned - a deliberate "die faster, earn more" difficulty knob
+  // on top of the normal progression.
+  const PLANET_DEFS = [
+    { id: "ursprung", name: "Ursprungsplanet", icon: "🪐", desc: "Heimatwelt. Ausgangspunkt jeder Verteidigung.", unlockAscensions: 0, multishot: 1, spawnRateMult: 1, coinMult: 1, coreMult: 1 },
+    { id: "kepler", name: "Kolonie Kepler", icon: "🌍", desc: "Mehrfachschuss (2 Ziele) und höhere Spawnrate. +30% Kristalle, +20% Kerne.", unlockAscensions: 3, multishot: 2, spawnRateMult: 0.8, coinMult: 1.3, coreMult: 1.2 },
+    { id: "trappist", name: "Vorposten Trappist", icon: "🌑", desc: "Mehrfachschuss (3 Ziele) und stark erhöhte Spawnrate. +70% Kristalle, +50% Kerne.", unlockAscensions: 8, multishot: 3, spawnRateMult: 0.65, coinMult: 1.7, coreMult: 1.5 },
+    { id: "cygnus", name: "Kernwelt Cygnus", icon: "🔴", desc: "Mehrfachschuss (4 Ziele) und extreme Spawnrate. +120% Kristalle, +90% Kerne.", unlockAscensions: 15, multishot: 4, spawnRateMult: 0.5, coinMult: 2.2, coreMult: 1.9 },
+  ];
+
   function defaultState() {
     return {
       // permanent / meta
@@ -87,6 +99,7 @@
       ascensionCount: 0,
       talents: {}, // id -> level
       equippedAbility: null, // id into ABILITY_DEFS, or null if none unlocked yet
+      activePlanet: "ursprung", // id into PLANET_DEFS
 
       // daily login streak
       lastLoginDate: null,
@@ -145,6 +158,14 @@
   // curve is the real practical limit during normal play.
   function gameSpeedMult(talents) {
     return Math.pow(2, Utils.clamp(getLevel(talents, "talentGameSpeed"), 0, 8));
+  }
+
+  function isPlanetUnlocked(def, state) {
+    return (state.ascensionCount || 0) >= def.unlockAscensions;
+  }
+
+  function activePlanetDef(state) {
+    return PLANET_DEFS.find((d) => d.id === state.activePlanet) || PLANET_DEFS[0];
   }
 
   function isAbilityUnlocked(abilityId, talents) {
@@ -226,7 +247,8 @@
     const total = Math.floor(Math.sqrt(state.totalCoinsEarned / 40));
     const claimed = Math.floor(Math.sqrt(state.coinsAtLastAscend / 40));
     const talentBonus = Math.pow(1.05, getLevel(state.talents, "talentCoreGain"));
-    return Math.floor((total - claimed) * talentBonus);
+    const planetBonus = activePlanetDef(state).coreMult;
+    return Math.floor((total - claimed) * talentBonus * planetBonus);
   }
 
   global.State = {
@@ -235,8 +257,11 @@
     LAB_DEFS,
     TALENT_DEFS,
     ABILITY_DEFS,
+    PLANET_DEFS,
     defaultState,
     pendingCores,
+    isPlanetUnlocked,
+    activePlanetDef,
     upgradeCost,
     upgradeCostRange,
     researchDurationMs,

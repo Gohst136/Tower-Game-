@@ -15,6 +15,11 @@
   const HP_GROWTH = 1.13;
   const DMG_GROWTH = 1.1;
   const CASH_GROWTH = 1.12;
+  // The mothership visibly grows across its first several appearances (it
+  // only spawns every 10th wave), then plateaus so it never overwhelms the
+  // screen or gets absurdly easy to hit.
+  const BOSS_RADIUS_GROWTH = 1.02;
+  const BOSS_RADIUS_CAP_MULT = 5;
 
   // Random modifier rolled for elite waves; applied on top of normal scaling.
   const ELITE_MODIFIERS = [
@@ -52,6 +57,9 @@
       cash: def.baseCash * Math.pow(CASH_GROWTH, w),
     };
     if (def.shieldRatio) stats.shieldHp = maxHp * def.shieldRatio;
+    if (type === "boss") {
+      stats.radius = def.radius * Math.min(Math.pow(BOSS_RADIUS_GROWTH, w), BOSS_RADIUS_CAP_MULT);
+    }
     return stats;
   }
 

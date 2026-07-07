@@ -35,6 +35,7 @@
       this.dom.researchIdleHint = el("research-idle-hint");
       this.dom.researchToast = el("research-toast");
       this.dom.abilityList = el("ability-list");
+      this.dom.planetList = el("planet-list");
 
       this.buyMultiplier = 1;
 
@@ -45,6 +46,7 @@
       this._buildLabList();
       this._buildUpgradeList(this.dom.talentList, this._regularTalentDefs(), "talent");
       this._buildAbilityList();
+      this._buildPlanetList();
       this._bindGameover();
       this._bindOffline();
       this._bindReset();
@@ -136,6 +138,7 @@
           this.refreshLabList();
           this.refreshUpgradeList(this.dom.talentList, this._regularTalentDefs(), "talent");
           this.refreshAbilityList();
+          this.refreshPlanetList();
           this.refreshAscendPreview();
           this.refreshTopbar();
         }
@@ -269,6 +272,60 @@
           levelEl.textContent = `Cooldown: ${State.abilityCooldown(abilityDef)}s`;
           costEl.textContent = equipped ? "Ausgerüstet" : "Ausrüsten";
           buyBtn.disabled = equipped;
+        }
+      });
+    },
+
+    _buildPlanetList() {
+      const container = this.dom.planetList;
+      container.innerHTML = "";
+      State.PLANET_DEFS.forEach((def) => {
+        const card = document.createElement("div");
+        card.className = "upgrade-card";
+        card.innerHTML = `
+          <div class="upgrade-icon">${def.icon}</div>
+          <div class="upgrade-info">
+            <div class="upgrade-name">${def.name}</div>
+            <div class="upgrade-desc">${def.desc}</div>
+            <div class="upgrade-level" data-role="level"></div>
+          </div>
+          <button class="upgrade-buy lab-buy" data-role="buy">
+            <span data-role="cost"></span>
+          </button>
+        `;
+        card.querySelector('[data-role="buy"]').addEventListener("click", () => {
+          if (this.game.selectPlanet(def.id)) {
+            Sfx.playPurchase();
+            Utils.vibrate(8);
+            this.refreshPlanetList();
+          }
+        });
+        card.dataset.id = def.id;
+        container.appendChild(card);
+      });
+      this.refreshPlanetList();
+    },
+
+    refreshPlanetList() {
+      const s = this.state;
+      State.PLANET_DEFS.forEach((def) => {
+        const card = this.dom.planetList.querySelector(`[data-id="${def.id}"]`);
+        if (!card) return;
+        const unlocked = State.isPlanetUnlocked(def, s);
+        const active = s.activePlanet === def.id;
+        const buyBtn = card.querySelector('[data-role="buy"]');
+        const levelEl = card.querySelector('[data-role="level"]');
+        const costEl = card.querySelector('[data-role="cost"]');
+        card.classList.toggle("equipped", active);
+        buyBtn.classList.toggle("equipped-buy", active);
+        if (!unlocked) {
+          levelEl.textContent = `Gesperrt (ab ${def.unlockAscensions} Aufstiegen)`;
+          costEl.textContent = "Gesperrt";
+          buyBtn.disabled = true;
+        } else {
+          levelEl.textContent = "Freigeschaltet";
+          costEl.textContent = active ? "Aktiv" : "Auswählen";
+          buyBtn.disabled = active;
         }
       });
     },
