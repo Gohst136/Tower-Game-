@@ -318,7 +318,7 @@ html, body {
   color: #bcd2ff;
 }
 
-/* ---------- Nova ability button ---------- */
+/* ---------- Equipped ability button ---------- */
 .nova-btn {
   position: absolute;
   right: 16px;
@@ -330,18 +330,20 @@ html, body {
   border: none;
   background: radial-gradient(circle, #2a1a4d 0%, #150c26 70%);
   color: #cbb8ff;
-  font-size: 10.5px;
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.02em;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 3;
 }
 
+.nova-btn.on-cooldown { font-size: 13px; }
+
 .nova-btn:disabled { color: #55506b; }
 
-.nova-btn #nova-ring {
+.nova-btn #ability-ring {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -350,7 +352,7 @@ html, body {
   pointer-events: none;
 }
 
-.nova-btn #nova-ring circle {
+.nova-btn #ability-ring circle {
   fill: none;
   stroke: #a78bfa;
   stroke-width: 3;
@@ -434,7 +436,7 @@ html, body {
   border: 1px solid rgba(77,212,255,0.25);
 }
 
-#research-fill {
+.research-bar > div {
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, #0e5f70, #4dd4ff);
@@ -530,6 +532,16 @@ html, body {
 .upgrade-buy.lab-buy:disabled {
   background: rgba(255,255,255,0.08);
   color: #5b6376;
+}
+
+.upgrade-card.equipped {
+  border-color: rgba(69,212,122,0.5);
+  background: rgba(69,212,122,0.08);
+}
+
+.upgrade-buy.equipped-buy {
+  background: linear-gradient(180deg, #45d47a, #2b9e58);
+  color: #06210f;
 }
 
 /* ---------- Stats view ---------- */

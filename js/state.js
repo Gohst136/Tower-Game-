@@ -30,12 +30,32 @@
   const RESEARCH_DURATION_MULT = 1.22; // per level, same spirit as costMult
   const MAX_RESEARCH_SECONDS = 4 * 3600; // cap a single project at 4h
 
-  // Talents: bought with Cores (earned via Ascension), survive an Ascension
+  // Combat abilities: one active slot, equipped from whichever of these are
+  // unlocked. Nova is no longer free - every ability (including it) needs
+  // its unlock talent bought first. baseCooldown is seconds.
+  const ABILITY_DEFS = [
+    { id: "nova", name: "Nova", icon: "💥", desc: "Flächenschaden auf alle Gegner in Reichweite", baseCooldown: 10 },
+    { id: "shield", name: "Schutzschild", icon: "🛡️", desc: "Absorbiert Schaden für kurze Zeit", baseCooldown: 14 },
+    { id: "slow", name: "Zeitlupe", icon: "❄️", desc: "Verlangsamt alle Gegner kurzzeitig deutlich", baseCooldown: 16 },
+    { id: "chain", name: "Kettenblitz", icon: "⚡", desc: "Schaden springt zwischen mehreren Gegnern", baseCooldown: 8 },
+    { id: "repair", name: "Notreparatur", icon: "💚", desc: "Heilt den Turm sofort um einen Anteil seiner Max-HP", baseCooldown: 20 },
+  ];
+
+  // Talents: bought with Cores (earned via Ascension), survive an Ascension.
+  // Entries with an `ability` field are one-time unlocks (maxLevel 1) for
+  // the matching ABILITY_DEFS entry - equip/swap happens for free afterward.
   const TALENT_DEFS = [
     { id: "talentDmg", name: "Uraltes Wissen", icon: "📜", desc: "+3% Turmschaden (für immer)", baseCost: 3, costMult: 1.3 },
     { id: "talentCoin", name: "Kern-Resonanz", icon: "🔮", desc: "+8% Coin-Gewinn pro Run-Ende", baseCost: 3, costMult: 1.3 },
     { id: "talentStartCash", name: "Kopfstart", icon: "🚀", desc: "+50 Cash Startkapital pro Run", baseCost: 2, costMult: 1.25 },
     { id: "talentCoreGain", name: "Aufstiegs-Erfahrung", icon: "✨", desc: "+5% Kerne pro Aufstieg", baseCost: 4, costMult: 1.35 },
+    { id: "talentResearchSpeed", name: "Effiziente Forschung", icon: "⏱️", desc: "+5% Forschungstempo je Stufe", baseCost: 4, costMult: 1.3 },
+    { id: "talentResearchSlots", name: "Parallele Forschung", icon: "🧬", desc: "+1 gleichzeitiges Forschungsprojekt (max. 3)", baseCost: 10, costMult: 2.2, maxLevel: 2 },
+    { id: "talentAbilityNova", name: "Nova-Kern", icon: "💥", desc: "Schaltet die Fähigkeit Nova frei", baseCost: 3, costMult: 1, maxLevel: 1, ability: "nova" },
+    { id: "talentAbilityShield", name: "Schild-Kern", icon: "🛡️", desc: "Schaltet die Fähigkeit Schutzschild frei", baseCost: 5, costMult: 1, maxLevel: 1, ability: "shield" },
+    { id: "talentAbilitySlow", name: "Chrono-Kern", icon: "❄️", desc: "Schaltet die Fähigkeit Zeitlupe frei", baseCost: 5, costMult: 1, maxLevel: 1, ability: "slow" },
+    { id: "talentAbilityChain", name: "Blitz-Kern", icon: "⚡", desc: "Schaltet die Fähigkeit Kettenblitz frei", baseCost: 6, costMult: 1, maxLevel: 1, ability: "chain" },
+    { id: "talentAbilityRepair", name: "Reparatur-Kern", icon: "💚", desc: "Schaltet die Fähigkeit Notreparatur frei", baseCost: 6, costMult: 1, maxLevel: 1, ability: "repair" },
   ];
 
   function defaultState() {
@@ -48,7 +68,7 @@
       bossKills: 0,
       runsCompleted: 0,
       lab: {}, // id -> level
-      research: null, // { id, startedAt, durationMs } | null - one active project
+      research: [], // { id, startedAt, durationMs }[] - up to maxResearchSlots(talents)
       autoRestart: false,
       musicEnabled: true,
       sfxEnabled: true,
@@ -64,6 +84,7 @@
       coinsAtLastAscend: 0,
       ascensionCount: 0,
       talents: {}, // id -> level
+      equippedAbility: null, // id into ABILITY_DEFS, or null if none unlocked yet
 
       // daily login streak
       lastLoginDate: null,
@@ -93,10 +114,30 @@
     return map[id] || 0;
   }
 
-  // Research duration in milliseconds for starting `def` at its current level.
-  function researchDurationMs(def, level) {
-    const seconds = Utils.clamp(def.baseMinutes * 60 * Math.pow(RESEARCH_DURATION_MULT, level), 1, MAX_RESEARCH_SECONDS);
+  // Research duration in milliseconds for starting `def` at its current
+  // level. speedMult < 1 (from talentResearchSpeed) shortens it further.
+  function researchDurationMs(def, level, speedMult) {
+    const raw = def.baseMinutes * 60 * Math.pow(RESEARCH_DURATION_MULT, level) * (speedMult || 1);
+    const seconds = Utils.clamp(raw, 1, MAX_RESEARCH_SECONDS);
     return seconds * 1000;
+  }
+
+  function researchSpeedMult(talents) {
+    return Math.pow(0.95, getLevel(talents, "talentResearchSpeed"));
+  }
+
+  function maxResearchSlots(talents) {
+    return 1 + Utils.clamp(getLevel(talents, "talentResearchSlots"), 0, 2);
+  }
+
+  function isAbilityUnlocked(abilityId, talents) {
+    const def = TALENT_DEFS.find((d) => d.ability === abilityId);
+    return def ? getLevel(talents, def.id) >= 1 : false;
+  }
+
+  // Ability cooldowns are flat once unlocked (unlock talents are one-time).
+  function abilityCooldown(abilityDef) {
+    return abilityDef.baseCooldown;
   }
 
   function load() {
@@ -114,7 +155,7 @@
     const merged = Object.assign(fresh, s);
     merged.run = Object.assign(fresh.run, s.run || {});
     merged.lab = s.lab || {};
-    merged.research = s.research || null;
+    merged.research = Array.isArray(s.research) ? s.research : s.research ? [s.research] : [];
 
     const now = Date.now();
     const offlineMs = now - (s.lastSaveTime || now);
@@ -176,10 +217,15 @@
     WORKSHOP_DEFS,
     LAB_DEFS,
     TALENT_DEFS,
+    ABILITY_DEFS,
     defaultState,
     pendingCores,
     upgradeCost,
     researchDurationMs,
+    researchSpeedMult,
+    maxResearchSlots,
+    isAbilityUnlocked,
+    abilityCooldown,
     getLevel,
     load,
     save,

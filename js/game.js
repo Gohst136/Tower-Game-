@@ -4,8 +4,16 @@
 (function (global) {
   const TOWER_RADIUS = 22;
   const RATE_WINDOW = 5; // seconds, for offline cash/sec estimate
-  const NOVA_COOLDOWN = 10; // seconds
-  const NOVA_DAMAGE_MULT = 5; // relative to a single normal shot
+  // Per-ability tuning. Conservative starting values, same spirit as the
+  // rest of the numeric content added this session - worth revisiting
+  // alongside the general balance pass.
+  const ABILITY_TUNING = {
+    nova: { damageMult: 5, radiusMult: 1.5 },
+    shield: { shieldPctOfMaxHp: 0.5, durationSec: 6 },
+    slow: { factor: 0.45, durationSec: 5 },
+    chain: { damageMult: 3, maxJumps: 4, falloff: 0.85, jumpRangeMult: 2 },
+    repair: { healPct: 0.35 },
+  };
   // Enemies always spawn this many world-units beyond the tower's current
   // range, so the "approach phase" before an enemy becomes attackable stays
   // a constant duration no matter how much Range has been upgraded. The
@@ -19,12 +27,16 @@
     entities: [],
     flashes: [],
     particles: [],
-    novaRings: [],
+    rings: [], // generic expanding-ring effect, used by several abilities
+    chainLines: [], // chain-lightning bolt segments
     spawnQueue: [],
     spawnTimer: 0,
     attackCooldown: 0,
-    novaCooldown: 0,
-    novaCooldownMax: NOVA_COOLDOWN,
+    abilityCooldownRemaining: 0,
+    towerShield: 0,
+    shieldExpiresAt: 0,
+    slowUntil: 0,
+    slowFactor: 1,
     shake: 0,
     time: 0,
     currentElite: null,
@@ -47,10 +59,14 @@
       this.entities = [];
       this.flashes = [];
       this.particles = [];
-      this.novaRings = [];
+      this.rings = [];
+      this.chainLines = [];
       this.spawnTimer = 0;
       this.attackCooldown = 0;
-      this.novaCooldown = 0;
+      this.abilityCooldownRemaining = 0;
+      this.towerShield = 0;
+      this.shieldExpiresAt = 0;
+      this.slowUntil = 0;
       this.shake = 0;
       this.checkAchievements();
     },
@@ -72,12 +88,16 @@
       this.entities = [];
       this.flashes = [];
       this.particles = [];
-      this.novaRings = [];
+      this.rings = [];
+      this.chainLines = [];
       this.currentElite = null;
       this.spawnQueue = Enemies.waveComposition(1, null);
       this.spawnTimer = 0;
       this.attackCooldown = 0;
-      this.novaCooldown = 0;
+      this.abilityCooldownRemaining = 0;
+      this.towerShield = 0;
+      this.shieldExpiresAt = 0;
+      this.slowUntil = 0;
     },
 
     buyWorkshop(id) {
@@ -97,45 +117,73 @@
       return true;
     },
 
-    // Starts a timed research project (one slot). Costs Coins up front;
-    // the level only applies once checkResearch() sees it has elapsed -
-    // including while the game was closed, since it's a plain timestamp check.
+    // Starts a timed research project in a free slot (up to
+    // State.maxResearchSlots(talents), unlocked via talentResearchSlots).
+    // Costs Coins up front; the level only applies once checkResearch() sees
+    // it has elapsed - including while the game was closed, since it's a
+    // plain timestamp check. Each Lab category can only run once at a time.
     startResearch(id) {
       const s = this.state;
-      if (s.research) return false; // slot busy
+      const maxSlots = State.maxResearchSlots(s.talents);
+      if (s.research.length >= maxSlots) return false;
+      if (s.research.some((r) => r.id === id)) return false;
       const def = State.LAB_DEFS.find((d) => d.id === id);
       if (!def) return false;
       const level = State.getLevel(s.lab, id);
       const cost = State.upgradeCost(def, level);
       if (s.coins < cost) return false;
       s.coins -= cost;
-      s.research = { id, startedAt: Date.now(), durationMs: State.researchDurationMs(def, level) };
+      const speedMult = State.researchSpeedMult(s.talents);
+      s.research.push({ id, startedAt: Date.now(), durationMs: State.researchDurationMs(def, level, speedMult) });
       return true;
     },
 
     // Independent of run state (also runs during game-over / idle screens).
-    // Returns the completed def if a project just finished, else null.
+    // Returns the array of defs that just completed (usually 0 or 1 entries).
     checkResearch() {
       const s = this.state;
-      if (!s.research) return null;
-      if (Date.now() < s.research.startedAt + s.research.durationMs) return null;
-      const def = State.LAB_DEFS.find((d) => d.id === s.research.id);
-      const level = State.getLevel(s.lab, s.research.id);
-      s.lab[s.research.id] = level + 1;
-      s.research = null;
-      if (this.onResearchComplete && def) this.onResearchComplete(def, level + 1);
-      return def;
+      const now = Date.now();
+      const completed = [];
+      s.research = s.research.filter((r) => {
+        if (now < r.startedAt + r.durationMs) return true;
+        const def = State.LAB_DEFS.find((d) => d.id === r.id);
+        const level = State.getLevel(s.lab, r.id);
+        s.lab[r.id] = level + 1;
+        if (def) completed.push({ def, level: level + 1 });
+        return false;
+      });
+      completed.forEach(({ def, level }) => {
+        if (this.onResearchComplete) this.onResearchComplete(def, level);
+      });
+      return completed;
     },
 
     buyTalent(id) {
       const def = State.TALENT_DEFS.find((d) => d.id === id);
       if (!def) return false;
       const level = State.getLevel(this.state.talents, id);
+      if (def.maxLevel !== undefined && level >= def.maxLevel) return false;
       const cost = State.upgradeCost(def, level);
       if (this.state.cores < cost) return false;
       this.state.cores -= cost;
       this.state.talents[id] = level + 1;
+      // First-time ability unlock: auto-equip if nothing is equipped yet,
+      // so a brand-new unlock doesn't just sit there unused.
+      if (def.ability && level === 0 && !this.state.equippedAbility) {
+        this.equipAbility(def.ability);
+      }
       return true;
+    },
+
+    equipAbility(id) {
+      if (!State.isAbilityUnlocked(id, this.state.talents)) return false;
+      this.state.equippedAbility = id;
+      this.abilityCooldownRemaining = 0;
+      return true;
+    },
+
+    unlockedAbilities() {
+      return State.ABILITY_DEFS.filter((d) => State.isAbilityUnlocked(d.id, this.state.talents));
     },
 
     // Deep reset: trades accumulated Coins + Lab levels for a lasting Cores
@@ -150,7 +198,7 @@
       s.ascensionCount = (s.ascensionCount || 0) + 1;
       s.coins = 0;
       s.lab = {};
-      s.research = null;
+      s.research = [];
       this.startNewRun();
       this.checkAchievements();
       return cores;
@@ -185,6 +233,8 @@
       this.entities = [];
       this.flashes = [];
       this.spawnQueue = [];
+      this.towerShield = 0;
+      this.slowUntil = 0;
       Sfx.playGameOver();
       this.checkAchievements();
       if (this.onRunEnd) this.onRunEnd(wave, coinsEarned);
@@ -208,19 +258,20 @@
       }
 
       // --- movement & impacts ---
+      const speedFactor = this.time < this.slowUntil ? this.slowFactor : 1;
       for (let i = this.entities.length - 1; i >= 0; i--) {
         const e = this.entities[i];
         const dx = cx - e.x, dy = cy - e.y;
         const dist = Math.hypot(dx, dy) || 1;
         if (dist <= TOWER_RADIUS + e.radius) {
-          s.run.towerHp -= e.damage;
+          this._damageTower(e.damage);
           this.entities.splice(i, 1);
           Sfx.playImpact();
           this.shake = Math.min(10, this.shake + 3);
           continue;
         }
-        e.x += (dx / dist) * e.speed * dt;
-        e.y += (dy / dist) * e.speed * dt;
+        e.x += (dx / dist) * e.speed * speedFactor * dt;
+        e.y += (dy / dist) * e.speed * speedFactor * dt;
       }
 
       // --- boss ranged attacks (poke the tower from a distance, not just on contact) ---
@@ -228,13 +279,16 @@
         if (e.type !== "boss") continue;
         e.rangedCooldown -= dt;
         if (e.rangedCooldown <= 0) {
-          s.run.towerHp -= e.rangedDamage;
+          this._damageTower(e.rangedDamage);
           this.flashes.push({ x: e.x, y: e.y, alpha: 1, color: "#ff6161" });
           Sfx.playBossShot();
           this.shake = Math.min(10, this.shake + 4);
           e.rangedCooldown = e.rangedInterval;
         }
       }
+
+      // --- shield decay ---
+      if (this.towerShield > 0 && this.time > this.shieldExpiresAt) this.towerShield = 0;
 
       // --- regen ---
       s.run.towerHp = Math.min(s.run.towerMaxHp, s.run.towerHp + stats.regen * dt);
@@ -252,13 +306,19 @@
         this.attackCooldown = stats.attackInterval;
       }
 
-      // --- nova cooldown ---
-      if (this.novaCooldown > 0) this.novaCooldown = Math.max(0, this.novaCooldown - dt);
+      // --- ability cooldown ---
+      if (this.abilityCooldownRemaining > 0) this.abilityCooldownRemaining = Math.max(0, this.abilityCooldownRemaining - dt);
 
       // --- fade flashes ---
       for (let i = this.flashes.length - 1; i >= 0; i--) {
         this.flashes[i].alpha -= dt * 6;
         if (this.flashes[i].alpha <= 0) this.flashes.splice(i, 1);
+      }
+
+      // --- fade chain-lightning bolts ---
+      for (let i = this.chainLines.length - 1; i >= 0; i--) {
+        this.chainLines[i].alpha -= dt * 5;
+        if (this.chainLines[i].alpha <= 0) this.chainLines.splice(i, 1);
       }
 
       // --- particles ---
@@ -272,12 +332,12 @@
         if (p.life <= 0) this.particles.splice(i, 1);
       }
 
-      // --- nova shockwave rings ---
-      for (let i = this.novaRings.length - 1; i >= 0; i--) {
-        const r = this.novaRings[i];
-        r.radius += 340 * dt;
+      // --- generic expanding rings (nova/slow/repair pulses) ---
+      for (let i = this.rings.length - 1; i >= 0; i--) {
+        const r = this.rings[i];
+        r.radius += r.growth * dt;
         r.alpha -= dt * 1.6;
-        if (r.alpha <= 0) this.novaRings.splice(i, 1);
+        if (r.alpha <= 0) this.rings.splice(i, 1);
       }
 
       // --- screen shake decay ---
@@ -331,6 +391,22 @@
         target.hp -= remainder;
       } else {
         target.hp -= amount;
+      }
+    },
+
+    // Same shield-then-hp pattern as _applyDamage, but for the tower's own
+    // Schutzschild ability instead of an enemy's shielded-type armor.
+    _damageTower(amount) {
+      if (this.towerShield > 0) {
+        if (amount <= this.towerShield) {
+          this.towerShield -= amount;
+          return;
+        }
+        const remainder = amount - this.towerShield;
+        this.towerShield = 0;
+        this.state.run.towerHp -= remainder;
+      } else {
+        this.state.run.towerHp -= amount;
       }
     },
 
@@ -388,27 +464,101 @@
       }
     },
 
-    novaReady() {
-      return this.novaCooldown <= 0 && this.state && this.state.run.alive;
+    abilityReady() {
+      return !!this.state.equippedAbility && this.abilityCooldownRemaining <= 0 && this.state.run.alive;
     },
 
-    activateNova() {
-      if (!this.novaReady()) return false;
+    currentAbilityCooldownMax() {
+      const id = this.state.equippedAbility;
+      if (!id) return 0;
+      const def = State.ABILITY_DEFS.find((d) => d.id === id);
+      return def ? State.abilityCooldown(def) : 0;
+    },
+
+    activateAbility() {
+      if (!this.abilityReady()) return false;
+      const handlers = {
+        nova: this._abilityNova,
+        shield: this._abilityShield,
+        slow: this._abilitySlow,
+        chain: this._abilityChain,
+        repair: this._abilityRepair,
+      };
+      const handler = handlers[this.state.equippedAbility];
+      if (!handler) return false;
+      handler.call(this);
+      this.abilityCooldownRemaining = this.currentAbilityCooldownMax();
+      return true;
+    },
+
+    _abilityNova() {
       const s = this.state;
       const stats = Tower.effectiveStats(s);
-      const novaDamage = stats.damage * NOVA_DAMAGE_MULT;
-      const novaRadius = stats.range * 1.5;
+      const tuning = ABILITY_TUNING.nova;
+      const novaDamage = stats.damage * tuning.damageMult;
+      const novaRadius = stats.range * tuning.radiusMult;
       const targets = this.entities.filter((e) => Math.hypot(e.x, e.y) <= novaRadius);
       targets.forEach((e) => {
         this._applyDamage(e, novaDamage);
         this.flashes.push({ x: e.x, y: e.y, alpha: 1 });
         if (e.hp <= 0) this._killEnemy(e, stats);
       });
-      this.novaRings.push({ x: 0, y: 0, radius: 10, alpha: 1 });
+      this.rings.push({ x: 0, y: 0, radius: 10, alpha: 1, color: "#c9aaff", growth: 340 });
       this.shake = Math.min(14, this.shake + 10);
       Sfx.playNova();
-      this.novaCooldown = NOVA_COOLDOWN;
-      return true;
+    },
+
+    _abilityShield() {
+      const tuning = ABILITY_TUNING.shield;
+      const stats = Tower.effectiveStats(this.state);
+      this.towerShield = stats.maxHp * tuning.shieldPctOfMaxHp;
+      this.shieldExpiresAt = this.time + tuning.durationSec;
+      this.rings.push({ x: 0, y: 0, radius: 10, alpha: 1, color: "#4dd4ff", growth: 200 });
+      Sfx.playShieldUp();
+    },
+
+    _abilitySlow() {
+      const tuning = ABILITY_TUNING.slow;
+      this.slowUntil = this.time + tuning.durationSec;
+      this.slowFactor = tuning.factor;
+      this.rings.push({ x: 0, y: 0, radius: 10, alpha: 1, color: "#7ee8ff", growth: 260 });
+      Sfx.playSlow();
+    },
+
+    _abilityChain() {
+      const s = this.state;
+      const stats = Tower.effectiveStats(s);
+      const tuning = ABILITY_TUNING.chain;
+      const jumpRange = stats.range * tuning.jumpRangeMult;
+      const hit = new Set();
+      let originX = 0, originY = 0;
+      let dmg = stats.damage * tuning.damageMult;
+      for (let i = 0; i < tuning.maxJumps; i++) {
+        let target = null, best = Infinity;
+        for (const e of this.entities) {
+          if (hit.has(e)) continue;
+          const d = Math.hypot(e.x - originX, e.y - originY);
+          if (d <= jumpRange && d < best) { best = d; target = e; }
+        }
+        if (!target) break;
+        hit.add(target);
+        this.chainLines.push({ x1: originX, y1: originY, x2: target.x, y2: target.y, alpha: 1 });
+        this._applyDamage(target, dmg);
+        if (target.hp <= 0) this._killEnemy(target, stats);
+        originX = target.x;
+        originY = target.y;
+        dmg *= tuning.falloff;
+      }
+      Sfx.playChain();
+    },
+
+    _abilityRepair() {
+      const s = this.state;
+      const tuning = ABILITY_TUNING.repair;
+      const heal = s.run.towerMaxHp * tuning.healPct;
+      s.run.towerHp = Math.min(s.run.towerMaxHp, s.run.towerHp + heal);
+      this.rings.push({ x: 0, y: 0, radius: 10, alpha: 1, color: "#7bf0a4", growth: 300 });
+      Sfx.playRepair();
     },
 
     _spawnEnemy(type, wave, stats, elite) {
@@ -480,10 +630,15 @@
         range: stats.range * zoom,
         elite: this.currentElite,
         boss: boss ? { hp: boss.hp, maxHp: boss.maxHp } : null,
+        shieldActive: this.towerShield > 0,
         enemies: this.entities.map((e) => ({ ...e, ...toScreen(e.x, e.y), radius: Math.max(3, e.radius * zoom) })),
         flashes: this.flashes.map((f) => ({ ...f, ...toScreen(f.x, f.y) })),
         particles: this.particles.map((p) => ({ ...p, ...toScreen(p.x, p.y), alpha: Math.max(0, p.life / p.maxLife) })),
-        novaRings: this.novaRings.map((r) => ({ ...r, ...toScreen(r.x, r.y), radius: r.radius * zoom })),
+        rings: this.rings.map((r) => ({ ...r, ...toScreen(r.x, r.y), radius: r.radius * zoom })),
+        chainLines: this.chainLines.map((l) => {
+          const a = toScreen(l.x1, l.y1), b = toScreen(l.x2, l.y2);
+          return { x1: a.x, y1: a.y, x2: b.x, y2: b.y, alpha: l.alpha };
+        }),
       };
     },
   };

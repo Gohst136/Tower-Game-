@@ -19,7 +19,7 @@
   UI.init(state, Game);
   UI.refreshTopbar();
   UI.refreshStats();
-  UI.refreshNova();
+  UI.refreshAbilityButton();
   UI.refreshElite();
   UI.refreshBoss();
 
@@ -105,12 +105,14 @@
       UI.refreshBattle(uiAccum);
       UI.refreshUpgradeList(UI.dom.workshopList, State.WORKSHOP_DEFS, "workshop");
       UI.refreshLabList();
-      UI.refreshNova();
+      UI.refreshAbilityButton();
+      UI.refreshAbilityList();
+      UI.refreshUpgradeList(UI.dom.talentList, UI._regularTalentDefs(), "talent");
       UI.refreshElite();
       UI.refreshBoss();
       UI.refreshAscendPreview();
       uiAccum = 0;
-    } else if (completedResearch) {
+    } else if (completedResearch.length > 0) {
       // a project just finished mid-throttle window - refresh right away
       // so the queue slot frees up immediately rather than up to ~66ms late
       UI.refreshLabList();

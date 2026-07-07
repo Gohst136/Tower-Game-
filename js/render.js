@@ -54,16 +54,32 @@
       ctx.restore();
     });
 
-    // nova shockwave rings
-    (world.novaRings || []).forEach((r) => {
+    // ability shockwave rings (nova/slow/repair pulses)
+    (world.rings || []).forEach((r) => {
+      const color = r.color || "#c9aaff";
       ctx.save();
       ctx.globalAlpha = Utils.clamp(r.alpha, 0, 1);
-      ctx.strokeStyle = "#c9aaff";
+      ctx.strokeStyle = color;
       ctx.lineWidth = 3;
-      ctx.shadowColor = "#a78bfa";
+      ctx.shadowColor = color;
       ctx.shadowBlur = 14;
       ctx.beginPath();
       ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // chain-lightning bolts
+    (world.chainLines || []).forEach((l) => {
+      ctx.save();
+      ctx.globalAlpha = Utils.clamp(l.alpha, 0, 1);
+      ctx.strokeStyle = "#fff27a";
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = "#ffe066";
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.moveTo(l.x1, l.y1);
+      ctx.lineTo(l.x2, l.y2);
       ctx.stroke();
       ctx.restore();
     });
@@ -120,6 +136,20 @@
     ctx.arc(cx, cy, towerR, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
+
+    // active Schutzschild glow
+    if (world.shieldActive) {
+      ctx.save();
+      const shieldPulse = 1 + Math.sin(world.time * 6) * 0.06;
+      ctx.strokeStyle = "rgba(77,212,255,0.8)";
+      ctx.lineWidth = 3;
+      ctx.shadowColor = "#4dd4ff";
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(cx, cy, towerR * 1.5 * shieldPulse, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
   }
 
   global.Render = { resize, draw };

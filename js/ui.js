@@ -31,28 +31,33 @@
       this.dom.achievementToast = el("achievement-toast");
       this.dom.loginToast = el("login-toast");
       this.dom.modalTutorial = el("modal-tutorial");
-      this.dom.researchActive = el("research-active");
-      this.dom.researchFill = el("research-fill");
+      this.dom.researchActiveList = el("research-active-list");
       this.dom.researchIdleHint = el("research-idle-hint");
       this.dom.researchToast = el("research-toast");
+      this.dom.abilityList = el("ability-list");
 
       this._bindTabs();
       this._bindRunControls();
       this._buildUpgradeList(this.dom.workshopList, State.WORKSHOP_DEFS, "workshop");
       this._buildLabList();
-      this._buildUpgradeList(this.dom.talentList, State.TALENT_DEFS, "talent");
+      this._buildUpgradeList(this.dom.talentList, this._regularTalentDefs(), "talent");
+      this._buildAbilityList();
       this._bindGameover();
       this._bindOffline();
       this._bindReset();
       this._bindAudioToggles();
       this._bindTargetMode();
-      this._bindNova();
+      this._bindAbilityButton();
       this._bindSaveTransfer();
       this._bindAscend();
       this._bindShare();
       this._bindTutorial();
       this.setAutoRestartLabel();
       this.refreshAscendPreview();
+    },
+
+    _regularTalentDefs() {
+      return State.TALENT_DEFS.filter((d) => !d.ability);
     },
 
     TUTORIAL_STEPS: [
@@ -68,13 +73,13 @@
       },
       {
         icon: "⚡",
-        title: "Nova & Zielmodus",
-        body: "Der NOVA-Knopf löst nach kurzer Aufladung Flächenschaden aus. Über die Buttons oben im Kampf wählst du, welchen Gegner der Turm zuerst angreift.",
+        title: "Fähigkeiten & Zielmodus",
+        body: "Der Fähigkeiten-Knopf löst nach Aufladung einen mächtigen Effekt aus (z.B. Nova, Schild, Zeitlupe). Du schaltest Fähigkeiten im Aufstieg-Tab frei und kannst zwischen freigeschalteten wechseln. Über die Buttons oben im Kampf wählst du, welchen Gegner der Turm zuerst angreift.",
       },
       {
         icon: "⭐",
         title: "Aufstieg",
-        body: "Sobald du genug Coins verdient hast, schaltest du im Aufstieg-Tab dauerhafte Talente gegen Kerne frei – das setzt Coins & Labor zurück, bleibt aber für immer. Manche Gegner haben außerdem Schilde oder teilen sich beim Tod – beobachte und reagiere!",
+        body: "Sobald du genug Coins verdient hast, schaltest du im Aufstieg-Tab dauerhafte Talente und Fähigkeiten gegen Kerne frei – das setzt Coins & Labor zurück, bleibt aber für immer. Manche Gegner haben außerdem Schilde oder teilen sich beim Tod – beobachte und reagiere!",
       },
     ],
 
@@ -126,7 +131,8 @@
         if (earned > 0) {
           Sfx.playAchievement();
           this.refreshLabList();
-          this.refreshUpgradeList(this.dom.talentList, State.TALENT_DEFS, "talent");
+          this.refreshUpgradeList(this.dom.talentList, this._regularTalentDefs(), "talent");
+          this.refreshAbilityList();
           this.refreshAscendPreview();
           this.refreshTopbar();
         }
@@ -170,23 +176,97 @@
       });
     },
 
-    _bindNova() {
-      this.dom.novaBtn = el("btn-nova");
-      this.dom.novaRing = el("nova-ring").querySelector("circle");
-      this.dom.novaLabel = el("nova-label");
-      this.dom.novaBtn.addEventListener("click", () => {
-        this.game.activateNova();
+    _bindAbilityButton() {
+      this.dom.abilityBtn = el("btn-ability");
+      this.dom.abilityRing = el("ability-ring").querySelector("circle");
+      this.dom.abilityIconLabel = el("ability-icon-label");
+      this.dom.abilityBtn.addEventListener("click", () => {
+        this.game.activateAbility();
       });
     },
 
-    refreshNova() {
+    refreshAbilityButton() {
       const g = this.game;
-      const ratio = Utils.clamp(g.novaCooldown / g.novaCooldownMax, 0, 1);
+      const s = this.state;
+      const equippedId = s.equippedAbility;
       const circumference = 113;
-      this.dom.novaRing.style.strokeDashoffset = circumference * ratio;
-      const ready = g.novaReady();
-      this.dom.novaBtn.disabled = !ready;
-      this.dom.novaLabel.textContent = ready ? "NOVA" : Math.ceil(g.novaCooldown) + "s";
+
+      if (!equippedId) {
+        this.dom.abilityRing.style.strokeDashoffset = circumference;
+        this.dom.abilityBtn.disabled = true;
+        this.dom.abilityBtn.classList.remove("on-cooldown");
+        this.dom.abilityIconLabel.textContent = "🔒";
+        return;
+      }
+
+      const def = State.ABILITY_DEFS.find((d) => d.id === equippedId);
+      const max = g.currentAbilityCooldownMax();
+      const ratio = max > 0 ? Utils.clamp(g.abilityCooldownRemaining / max, 0, 1) : 0;
+      this.dom.abilityRing.style.strokeDashoffset = circumference * ratio;
+      const ready = g.abilityReady();
+      this.dom.abilityBtn.disabled = !ready;
+      this.dom.abilityBtn.classList.toggle("on-cooldown", !ready);
+      this.dom.abilityIconLabel.textContent = ready ? def.icon : Math.ceil(g.abilityCooldownRemaining) + "s";
+    },
+
+    _buildAbilityList() {
+      const container = this.dom.abilityList;
+      container.innerHTML = "";
+      State.ABILITY_DEFS.forEach((abilityDef) => {
+        const talentDef = State.TALENT_DEFS.find((d) => d.ability === abilityDef.id);
+        const card = document.createElement("div");
+        card.className = "upgrade-card";
+        card.innerHTML = `
+          <div class="upgrade-icon">${abilityDef.icon}</div>
+          <div class="upgrade-info">
+            <div class="upgrade-name">${abilityDef.name}</div>
+            <div class="upgrade-desc">${abilityDef.desc}</div>
+            <div class="upgrade-level" data-role="level">Gesperrt</div>
+          </div>
+          <button class="upgrade-buy lab-buy" data-role="buy">
+            <span data-role="cost">0</span>
+          </button>
+        `;
+        card.querySelector('[data-role="buy"]').addEventListener("click", () => {
+          const level = State.getLevel(this.state.talents, talentDef.id);
+          const acted = level === 0 ? this.game.buyTalent(talentDef.id) : this.game.equipAbility(abilityDef.id);
+          if (acted) {
+            Sfx.playPurchase();
+            this.refreshAbilityList();
+            this.refreshAbilityButton();
+          }
+        });
+        card.dataset.id = abilityDef.id;
+        container.appendChild(card);
+      });
+      this.refreshAbilityList();
+    },
+
+    refreshAbilityList() {
+      const s = this.state;
+      State.ABILITY_DEFS.forEach((abilityDef) => {
+        const card = this.dom.abilityList.querySelector(`[data-id="${abilityDef.id}"]`);
+        if (!card) return;
+        const talentDef = State.TALENT_DEFS.find((d) => d.ability === abilityDef.id);
+        const level = State.getLevel(s.talents, talentDef.id);
+        const unlocked = level >= 1;
+        const equipped = s.equippedAbility === abilityDef.id;
+        const buyBtn = card.querySelector('[data-role="buy"]');
+        const levelEl = card.querySelector('[data-role="level"]');
+        const costEl = card.querySelector('[data-role="cost"]');
+        card.classList.toggle("equipped", equipped);
+        buyBtn.classList.toggle("equipped-buy", equipped);
+        if (!unlocked) {
+          const cost = State.upgradeCost(talentDef, level);
+          levelEl.textContent = "Gesperrt";
+          costEl.textContent = "Freischalten (" + Utils.formatNumber(cost) + ")";
+          buyBtn.disabled = s.cores < cost;
+        } else {
+          levelEl.textContent = `Cooldown: ${State.abilityCooldown(abilityDef)}s`;
+          costEl.textContent = equipped ? "Ausgerüstet" : "Ausrüsten";
+          buyBtn.disabled = equipped;
+        }
+      });
     },
 
     _bindSaveTransfer() {
@@ -353,35 +433,51 @@
 
     refreshLabList() {
       const s = this.state;
-      const busy = !!s.research;
+      const maxSlots = State.maxResearchSlots(s.talents);
+      const slotsFull = s.research.length >= maxSlots;
+      const activeIds = new Set(s.research.map((r) => r.id));
+      const speedMult = State.researchSpeedMult(s.talents);
       State.LAB_DEFS.forEach((def) => {
         const card = this.dom.labList.querySelector(`[data-id="${def.id}"]`);
         if (!card) return;
         const level = State.getLevel(s.lab, def.id);
         const cost = State.upgradeCost(def, level);
-        const durationMs = State.researchDurationMs(def, level);
+        const durationMs = State.researchDurationMs(def, level, speedMult);
         card.querySelector('[data-role="level"]').textContent = "Stufe " + level;
         card.querySelector('[data-role="cost"]').textContent = Utils.formatNumber(cost);
         card.querySelector('[data-role="duration"]').textContent = Utils.formatTime(durationMs / 1000);
         const buyBtn = card.querySelector('[data-role="buy"]');
-        buyBtn.disabled = busy || s.coins < cost;
+        buyBtn.disabled = slotsFull || activeIds.has(def.id) || s.coins < cost;
       });
       this.refreshResearchProgress();
     },
 
     refreshResearchProgress() {
-      const research = this.state.research;
-      this.dom.researchActive.classList.toggle("hidden", !research);
-      this.dom.researchIdleHint.classList.toggle("hidden", !!research);
-      if (!research) return;
-      const def = State.LAB_DEFS.find((d) => d.id === research.id);
-      const elapsed = Date.now() - research.startedAt;
-      const ratio = Utils.clamp(elapsed / research.durationMs, 0, 1);
-      const remaining = Math.max(0, (research.startedAt + research.durationMs - Date.now()) / 1000);
-      el("research-icon").textContent = def ? def.icon : "🔬";
-      el("research-name").textContent = def ? def.name : "Projekt";
-      el("research-time").textContent = Utils.formatTime(remaining);
-      this.dom.researchFill.style.width = ratio * 100 + "%";
+      const s = this.state;
+      const maxSlots = State.maxResearchSlots(s.talents);
+      this.dom.researchIdleHint.classList.toggle("hidden", s.research.length >= maxSlots);
+      this.dom.researchIdleHint.textContent =
+        s.research.length >= maxSlots
+          ? ""
+          : `Wähle unten eine Forschung (${s.research.length}/${maxSlots} Slots belegt). Sie läuft über echte Zeit weiter, auch wenn du das Spiel schließt.`;
+
+      this.dom.researchActiveList.innerHTML = s.research
+        .map((r) => {
+          const def = State.LAB_DEFS.find((d) => d.id === r.id);
+          const ratio = Utils.clamp((Date.now() - r.startedAt) / r.durationMs, 0, 1);
+          const remaining = Math.max(0, (r.startedAt + r.durationMs - Date.now()) / 1000);
+          return `
+            <div class="research-box">
+              <div class="research-row">
+                <span>${def ? def.icon : "🔬"}</span>
+                <span>${def ? def.name : "Projekt"}</span>
+                <span>${Utils.formatTime(remaining)}</span>
+              </div>
+              <div class="research-bar"><div style="width:${ratio * 100}%"></div></div>
+            </div>
+          `;
+        })
+        .join("");
     },
 
     showResearchToast(def, level) {

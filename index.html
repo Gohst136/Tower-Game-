@@ -86,9 +86,9 @@
       <button class="target-btn" data-mode="strongest">Stärkster</button>
       <button class="target-btn" data-mode="weakest">Schwächster</button>
     </div>
-    <button id="btn-nova" class="nova-btn">
-      <span id="nova-label">NOVA</span>
-      <svg id="nova-ring" viewBox="0 0 40 40">
+    <button id="btn-ability" class="nova-btn">
+      <span id="ability-icon-label">🔒</span>
+      <svg id="ability-ring" viewBox="0 0 40 40">
         <circle cx="20" cy="20" r="18" />
       </svg>
     </button>
@@ -107,15 +107,8 @@
   <!-- Lab view: a timed research queue, bought with coins -->
   <section id="view-lab" class="view">
     <h2 class="view-title">Labor <span class="view-sub">(Coins · Forschungs-Queue)</span></h2>
-    <div id="research-active" class="research-box hidden">
-      <div class="research-row">
-        <span id="research-icon">🔬</span>
-        <span id="research-name">Projekt</span>
-        <span id="research-time">0:00</span>
-      </div>
-      <div class="research-bar"><div id="research-fill"></div></div>
-    </div>
-    <p id="research-idle-hint" class="research-idle-hint">Kein aktives Projekt – wähle unten eine Forschung. Sie läuft über echte Zeit weiter, auch wenn du das Spiel schließt.</p>
+    <div id="research-active-list"></div>
+    <p id="research-idle-hint" class="research-idle-hint">Wähle unten eine Forschung. Sie läuft über echte Zeit weiter, auch wenn du das Spiel schließt.</p>
     <div id="lab-list" class="upgrade-list"></div>
   </section>
 
@@ -128,6 +121,9 @@
       <p class="ascend-preview">Verfügbar bei Aufstieg: <strong id="ascend-preview-cores">0</strong> Kerne</p>
       <button id="btn-ascend" class="primary-btn">Aufstieg durchführen</button>
     </div>
+    <h3 class="sub-heading">Fähigkeiten <span class="view-sub">(eine ausgerüstet, austauschbar)</span></h3>
+    <div id="ability-list" class="upgrade-list"></div>
+    <h3 class="sub-heading">Talente</h3>
     <div id="talent-list" class="upgrade-list"></div>
   </section>
 

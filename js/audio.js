@@ -183,6 +183,73 @@
       src.stop(t + 0.5);
     },
 
+    playShieldUp() {
+      if (!this._readyForSfx()) return;
+      const ctx = this.ctx, t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(300, t);
+      osc.frequency.exponentialRampToValueAtTime(900, t + 0.3);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.22, t + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+      osc.connect(g).connect(this.sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.42);
+    },
+
+    playSlow() {
+      if (!this._readyForSfx()) return;
+      const ctx = this.ctx, t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(700, t);
+      osc.frequency.exponentialRampToValueAtTime(180, t + 0.6);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.2, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
+      osc.connect(g).connect(this.sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.68);
+    },
+
+    playChain() {
+      if (!this._readyForSfx()) return;
+      const ctx = this.ctx, t = ctx.currentTime;
+      [0, 1, 2, 3].forEach((i) => {
+        const start = t + i * 0.05;
+        const osc = ctx.createOscillator();
+        osc.type = "square";
+        osc.frequency.setValueAtTime(1200 - i * 150, start);
+        osc.frequency.exponentialRampToValueAtTime(300 - i * 30, start + 0.06);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.16, start);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + 0.08);
+        osc.connect(g).connect(this.sfxGain);
+        osc.start(start);
+        osc.stop(start + 0.1);
+      });
+    },
+
+    playRepair() {
+      if (!this._readyForSfx()) return;
+      const ctx = this.ctx, t = ctx.currentTime;
+      [523, 659, 784].forEach((freq, i) => {
+        const start = t + i * 0.09;
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.18, start + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + 0.3);
+        osc.connect(g).connect(this.sfxGain);
+        osc.start(start);
+        osc.stop(start + 0.32);
+      });
+    },
+
     playEliteStart() {
       if (!this._readyForSfx()) return;
       const ctx = this.ctx, t = ctx.currentTime;
