@@ -47,6 +47,7 @@
       this._bindBuyMultiplier();
       this._buildUpgradeList(this.dom.workshopList, State.WORKSHOP_DEFS, "workshop");
       this._buildLabList();
+      this._bindResearchSkip();
       this._buildUpgradeList(this.dom.talentList, this._regularTalentDefs(), "talent");
       this._buildAbilityList();
       this._buildPlanetList();
@@ -515,6 +516,28 @@
       this.refreshLabList();
     },
 
+    // Active research cards are fully rebuilt on every refresh tick (the
+    // queue's contents change over time), so the skip button is bound once
+    // here via event delegation rather than per-card.
+    _bindResearchSkip() {
+      this.dom.researchActiveList.addEventListener("click", (e) => {
+        const btn = e.target.closest('[data-role="skip"]');
+        if (!btn || btn.disabled) return;
+        const id = btn.dataset.id;
+        const entry = this.state.research.find((r) => r.id === id);
+        if (!entry) return;
+        const cost = this.game.skipResearchCost(entry);
+        const def = State.LAB_DEFS.find((d) => d.id === id);
+        if (!confirm(`${def ? def.name : "Forschung"} für ${Utils.formatNumber(cost)} Kristalle sofort fertigstellen?`)) return;
+        if (this.game.skipResearch(id)) {
+          Sfx.playPurchase();
+          Utils.vibrate(8);
+          this.refreshLabList();
+          this.refreshTopbar();
+        }
+      });
+    },
+
     refreshLabList() {
       const s = this.state;
       const maxSlots = State.maxResearchSlots(s.talents);
@@ -550,6 +573,7 @@
           const def = State.LAB_DEFS.find((d) => d.id === r.id);
           const ratio = Utils.clamp((Date.now() - r.startedAt) / r.durationMs, 0, 1);
           const remaining = Math.max(0, (r.startedAt + r.durationMs - Date.now()) / 1000);
+          const skipCost = this.game.skipResearchCost(r);
           return `
             <div class="research-box">
               <div class="research-row">
@@ -558,6 +582,9 @@
                 <span>${Utils.formatTime(remaining)}</span>
               </div>
               <div class="research-bar"><div style="width:${ratio * 100}%"></div></div>
+              <button class="research-skip-btn" data-role="skip" data-id="${r.id}" ${s.coins < skipCost ? "disabled" : ""}>
+                Überspringen (${Utils.formatNumber(skipCost)})
+              </button>
             </div>
           `;
         })

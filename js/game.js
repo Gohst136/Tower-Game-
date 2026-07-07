@@ -178,6 +178,30 @@
       return completed;
     },
 
+    // Kristalle cost to finish a specific in-progress project right now:
+    // 1 Kristall per 2 remaining seconds, min 1 while any time is left.
+    skipResearchCost(entry) {
+      const remainingMs = Math.max(0, entry.startedAt + entry.durationMs - Date.now());
+      if (remainingMs <= 0) return 0;
+      return Math.max(1, Math.ceil(remainingMs / 1000 / 2));
+    },
+
+    skipResearch(id) {
+      const s = this.state;
+      const idx = s.research.findIndex((r) => r.id === id);
+      if (idx < 0) return false;
+      const entry = s.research[idx];
+      const cost = this.skipResearchCost(entry);
+      if (s.coins < cost) return false;
+      s.coins -= cost;
+      const def = State.LAB_DEFS.find((d) => d.id === id);
+      const level = State.getLevel(s.lab, id);
+      s.lab[id] = level + 1;
+      s.research.splice(idx, 1);
+      if (this.onResearchComplete) this.onResearchComplete(def, level + 1);
+      return true;
+    },
+
     buyTalent(id) {
       const def = State.TALENT_DEFS.find((d) => d.id === id);
       if (!def) return false;
