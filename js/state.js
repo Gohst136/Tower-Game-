@@ -35,6 +35,8 @@
       runsCompleted: 0,
       lab: {}, // id -> level
       autoRestart: false,
+      musicEnabled: true,
+      sfxEnabled: true,
       lastSaveTime: Date.now(),
       // recent rate tracking (for offline estimate)
       recentCashPerSecond: 0,

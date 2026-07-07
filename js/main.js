@@ -4,6 +4,12 @@
 
   const { state, offlineSeconds } = State.load();
 
+  Sfx.sfxEnabled = state.sfxEnabled;
+  Sfx.musicEnabled = state.musicEnabled;
+  const unlockAudio = () => Sfx.unlock();
+  document.addEventListener("pointerdown", unlockAudio, { once: true });
+  document.addEventListener("touchstart", unlockAudio, { once: true });
+
   Game.init(state);
   Game.onRunEnd = (wave, coins) => UI.showGameover(wave, coins);
 
@@ -68,6 +74,7 @@
   window.addEventListener("pagehide", () => State.save(state));
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") State.save(state);
+    else if (Sfx.ctx && Sfx.ctx.state === "suspended") Sfx.ctx.resume();
   });
 
   // Refresh stats tab lazily when opened

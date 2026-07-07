@@ -84,6 +84,7 @@
       const s = this.state;
       s.run.wave += 1;
       this.spawnQueue = Enemies.waveComposition(s.run.wave);
+      Sfx.playWaveStart();
       if (this.onWaveChange) this.onWaveChange(s.run.wave);
     },
 
@@ -101,6 +102,7 @@
       this.entities = [];
       this.flashes = [];
       this.spawnQueue = [];
+      Sfx.playGameOver();
       if (this.onRunEnd) this.onRunEnd(wave, coinsEarned);
       return coinsEarned;
     },
@@ -129,6 +131,7 @@
         if (dist <= TOWER_RADIUS + e.radius) {
           s.run.towerHp -= e.damage;
           this.entities.splice(i, 1);
+          Sfx.playImpact();
           continue;
         }
         e.x += (dx / dist) * e.speed * dt;
@@ -149,6 +152,7 @@
         if (target) {
           target.hp -= stats.damage;
           this.flashes.push({ x: target.x, y: target.y, alpha: 1 });
+          Sfx.playShot();
           if (target.hp <= 0) {
             const idx = this.entities.indexOf(target);
             if (idx >= 0) this.entities.splice(idx, 1);
@@ -156,6 +160,7 @@
             s.run.cash += cashGain;
             s.totalKills += 1;
             this.rateWindowCash += cashGain;
+            Sfx.playKill(target.type);
           }
         }
         this.attackCooldown = stats.attackInterval;

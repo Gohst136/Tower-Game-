@@ -30,7 +30,30 @@
       this._bindGameover();
       this._bindOffline();
       this._bindReset();
+      this._bindAudioToggles();
       this.setAutoRestartLabel();
+    },
+
+    _bindAudioToggles() {
+      const musicBtn = el("btn-toggle-music");
+      const sfxBtn = el("btn-toggle-sfx");
+      const refresh = () => {
+        musicBtn.textContent = "Musik: " + (this.state.musicEnabled ? "An" : "Aus");
+        musicBtn.classList.toggle("on", this.state.musicEnabled);
+        sfxBtn.textContent = "Soundeffekte: " + (this.state.sfxEnabled ? "An" : "Aus");
+        sfxBtn.classList.toggle("on", this.state.sfxEnabled);
+      };
+      musicBtn.addEventListener("click", () => {
+        this.state.musicEnabled = !this.state.musicEnabled;
+        Sfx.setMusicEnabled(this.state.musicEnabled);
+        refresh();
+      });
+      sfxBtn.addEventListener("click", () => {
+        this.state.sfxEnabled = !this.state.sfxEnabled;
+        Sfx.setSfxEnabled(this.state.sfxEnabled);
+        refresh();
+      });
+      refresh();
     },
 
     _bindTabs() {
@@ -77,7 +100,10 @@
         const buyBtn = card.querySelector('[data-role="buy"]');
         buyBtn.addEventListener("click", () => {
           const ok = kind === "lab" ? this.game.buyLab(def.id) : this.game.buyWorkshop(def.id);
-          if (ok) this.refreshUpgradeList(container, defs, kind);
+          if (ok) {
+            Sfx.playPurchase();
+            this.refreshUpgradeList(container, defs, kind);
+          }
         });
         card.dataset.id = def.id;
         container.appendChild(card);
