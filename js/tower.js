@@ -22,7 +22,7 @@
     const hpMult = Math.pow(1.15, lvl(w, "hp")) * Math.pow(1.05, lvl(lab, "labHp"));
     const regenFlat = lvl(w, "regen") * 0.4;
     const regenMult = Math.pow(1.05, lvl(lab, "labRegen"));
-    const cashMult = Math.pow(1.1, lvl(w, "cash")) * Math.pow(1.05, lvl(lab, "labCash"));
+    const cashMult = Math.pow(1.05, lvl(w, "cash")) * Math.pow(1.03, lvl(lab, "labCash"));
     const planet = State.activePlanetDef(state);
     const coinMult = Math.pow(1.05, lvl(lab, "labCoin")) * Math.pow(1.08, lvl(talents, "talentCoin")) * planet.coinMult;
 

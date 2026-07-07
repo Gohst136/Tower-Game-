@@ -7,12 +7,12 @@
   // --- Upgrade catalogs -----------------------------------------------
   // Werkstatt: reset every run, bought with Rohstoffe (Cash)
   const WORKSHOP_DEFS = [
-    { id: "dmg", name: "Geschützverstärkung", icon: "blast", desc: "+8% Geschützschaden", baseCost: 10, costMult: 1.15 },
-    { id: "atk", name: "Feuerleitsystem", icon: "bolt", desc: "+5% Feuerrate", baseCost: 15, costMult: 1.16 },
-    { id: "range", name: "Langstreckensensoren", icon: "radar", desc: "+6 Sensorreichweite", baseCost: 8, costMult: 1.12 },
-    { id: "hp", name: "Planetenpanzerung", icon: "shield", desc: "+15% Maximale Integrität", baseCost: 10, costMult: 1.15 },
-    { id: "regen", name: "Selbstheilungsmatrix", icon: "heal", desc: "+0.4 Integritäts-Regeneration/Sek", baseCost: 12, costMult: 1.15 },
-    { id: "cash", name: "Bergbaudrohnen", icon: "coinbag", desc: "+10% Rohstoff-Gewinn", baseCost: 20, costMult: 1.2 },
+    { id: "dmg", name: "Geschützverstärkung", icon: "blast", desc: "+8% Geschützschaden", baseCost: 10, costMult: 1.28 },
+    { id: "atk", name: "Feuerleitsystem", icon: "bolt", desc: "+5% Feuerrate", baseCost: 15, costMult: 1.28 },
+    { id: "range", name: "Langstreckensensoren", icon: "radar", desc: "+6 Sensorreichweite", baseCost: 8, costMult: 1.18 },
+    { id: "hp", name: "Planetenpanzerung", icon: "shield", desc: "+15% Maximale Integrität", baseCost: 10, costMult: 1.26 },
+    { id: "regen", name: "Selbstheilungsmatrix", icon: "heal", desc: "+0.4 Integritäts-Regeneration/Sek", baseCost: 12, costMult: 1.26 },
+    { id: "cash", name: "Bergbaudrohnen", icon: "coinbag", desc: "+5% Rohstoff-Gewinn", baseCost: 20, costMult: 1.5 },
   ];
 
   // Labor: a timed research queue (one project at a time). Starting a
@@ -23,7 +23,7 @@
   const LAB_DEFS = [
     { id: "labDmg", name: "Waffenlabor", icon: "microscope", desc: "+5% Geschützschaden (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 3 },
     { id: "labHp", name: "Rumpfverstärkung", icon: "fortress", desc: "+5% Maximale Integrität (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 3 },
-    { id: "labCash", name: "Handelsroute", icon: "chartup", desc: "+5% Rohstoff-Gewinn (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 4 },
+    { id: "labCash", name: "Handelsroute", icon: "chartup", desc: "+3% Rohstoff-Gewinn (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 4 },
     { id: "labCoin", name: "Kristallraffinerie", icon: "coin", desc: "+5% Kristall-Gewinn (permanent)", baseCost: 8, costMult: 1.3, baseMinutes: 8 },
     { id: "labStart", name: "Vorratslager", icon: "vault", desc: "+25 Rohstoffe Startbonus (permanent)", baseCost: 4, costMult: 1.2, baseMinutes: 2 },
     { id: "labRegen", name: "Auto-Reparatur", icon: "gear", desc: "+5% Integritäts-Regeneration (permanent)", baseCost: 6, costMult: 1.25, baseMinutes: 5 },

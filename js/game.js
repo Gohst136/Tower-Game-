@@ -268,6 +268,13 @@
       return coinsEarned;
     },
 
+    // Lets the player cash out early instead of waiting to die - same
+    // Kristalle payout formula as a normal death, just player-triggered.
+    endRun() {
+      if (!this.state.run.alive) return 0;
+      return this._endRun();
+    },
+
     update(dt) {
       const s = this.state;
       // Chronobeschleuniger talent: uniformly speeds up the whole simulation.

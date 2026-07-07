@@ -322,6 +322,16 @@ html, body {
   position: absolute;
   right: 12px;
   bottom: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.toggle-btn.danger {
+  border-color: rgba(255,90,90,0.4);
+  background: rgba(255,90,90,0.12);
+  color: #ff8a8a;
 }
 
 /* ---------- Target mode selector ---------- */

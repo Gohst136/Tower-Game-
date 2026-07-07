@@ -412,6 +412,11 @@
         this.state.autoRestart = !this.state.autoRestart;
         this.setAutoRestartLabel();
       });
+      el("btn-end-run").addEventListener("click", () => {
+        if (!this.state.run.alive) return;
+        if (!confirm("Run jetzt beenden und die aktuellen Kristalle einsammeln?")) return;
+        this.game.endRun();
+      });
     },
 
     setAutoRestartLabel() {

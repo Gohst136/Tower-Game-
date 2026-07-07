@@ -12,9 +12,9 @@
     boss: { label: "Alien-Mutterschiff", baseHp: 500, baseDmg: 18, baseSpeed: 20, baseCash: 25, radius: 20, color: "#ff5f7a", shape: "ship" },
   };
 
-  const HP_GROWTH = 1.13;
-  const DMG_GROWTH = 1.1;
-  const CASH_GROWTH = 1.12;
+  const HP_GROWTH = 1.15;
+  const DMG_GROWTH = 1.12;
+  const CASH_GROWTH = 1.09;
   // The mothership visibly grows across its first several appearances (it
   // only spawns every 10th wave), then plateaus so it never overwhelms the
   // screen or gets absurdly easy to hit.
