@@ -1,6 +1,8 @@
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -24,6 +26,35 @@ html, body {
   margin: 0 auto;
   position: relative;
   background: radial-gradient(circle at 50% 30%, #101828 0%, #05070c 70%);
+}
+
+/* ---------- iOS install tip ---------- */
+.install-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(61,127,255,0.16);
+  border-bottom: 1px solid rgba(126,168,255,0.3);
+  padding: 8px max(10px, env(safe-area-inset-left)) 8px 12px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: #d7e2ff;
+}
+
+.install-tip.hidden { display: none; }
+
+.install-tip span { flex: 1; }
+
+.install-tip button {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.12);
+  color: #d7e2ff;
+  font-size: 15px;
+  line-height: 1;
 }
 
 /* ---------- Top bar ---------- */
@@ -148,6 +179,78 @@ html, body {
   position: absolute;
   right: 12px;
   bottom: 56px;
+}
+
+/* ---------- Target mode selector ---------- */
+#target-mode-group {
+  position: absolute;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 3px;
+  z-index: 3;
+}
+
+.target-btn {
+  border: none;
+  background: transparent;
+  color: #8a92a6;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 9px;
+  border-radius: 7px;
+}
+
+.target-btn.active {
+  background: rgba(126,168,255,0.22);
+  color: #bcd2ff;
+}
+
+/* ---------- Nova ability button ---------- */
+.nova-btn {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  background: radial-gradient(circle, #2a1a4d 0%, #150c26 70%);
+  color: #cbb8ff;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+.nova-btn:disabled { color: #55506b; }
+
+.nova-btn #nova-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+.nova-btn #nova-ring circle {
+  fill: none;
+  stroke: #a78bfa;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 113;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.1s linear;
 }
 
 .toggle-btn {
@@ -348,6 +451,42 @@ html, body {
   font-weight: 700;
   margin-top: 8px;
 }
+
+.secondary-btn {
+  width: 100%;
+  padding: 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: #c3cade;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.code-box {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.35);
+  color: #cfd6e6;
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  resize: none;
+  user-select: text;
+  -webkit-user-select: text;
+  -webkit-touch-callout: default;
+}
+
+.error-text {
+  color: #ff8a8a;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+.error-text.hidden { display: none; }
 
 /* Buttons reset */
 button {

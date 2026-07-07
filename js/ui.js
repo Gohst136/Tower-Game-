@@ -31,7 +31,80 @@
       this._bindOffline();
       this._bindReset();
       this._bindAudioToggles();
+      this._bindTargetMode();
+      this._bindNova();
+      this._bindSaveTransfer();
       this.setAutoRestartLabel();
+    },
+
+    _bindTargetMode() {
+      const buttons = document.querySelectorAll(".target-btn");
+      buttons.forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.mode === this.state.targetMode);
+        btn.addEventListener("click", () => {
+          this.state.targetMode = btn.dataset.mode;
+          buttons.forEach((b) => b.classList.toggle("active", b === btn));
+        });
+      });
+    },
+
+    _bindNova() {
+      this.dom.novaBtn = el("btn-nova");
+      this.dom.novaRing = el("nova-ring").querySelector("circle");
+      this.dom.novaLabel = el("nova-label");
+      this.dom.novaBtn.addEventListener("click", () => {
+        this.game.activateNova();
+      });
+    },
+
+    refreshNova() {
+      const g = this.game;
+      const ratio = Utils.clamp(g.novaCooldown / g.novaCooldownMax, 0, 1);
+      const circumference = 113;
+      this.dom.novaRing.style.strokeDashoffset = circumference * ratio;
+      const ready = g.novaReady();
+      this.dom.novaBtn.disabled = !ready;
+      this.dom.novaLabel.textContent = ready ? "NOVA" : Math.ceil(g.novaCooldown) + "s";
+    },
+
+    _bindSaveTransfer() {
+      const modalExport = el("modal-export");
+      const modalImport = el("modal-import");
+      const exportCode = el("export-code");
+      const importCode = el("import-code");
+      const importError = el("import-error");
+
+      el("btn-export-save").addEventListener("click", () => {
+        exportCode.value = State.exportSave(this.state);
+        importError.classList.add("hidden");
+        modalExport.classList.remove("hidden");
+      });
+      el("btn-export-close").addEventListener("click", () => modalExport.classList.add("hidden"));
+      el("btn-copy-export").addEventListener("click", async () => {
+        exportCode.focus();
+        exportCode.select();
+        try {
+          await navigator.clipboard.writeText(exportCode.value);
+        } catch (e) {
+          document.execCommand("copy");
+        }
+      });
+
+      el("btn-import-save").addEventListener("click", () => {
+        importCode.value = "";
+        importError.classList.add("hidden");
+        modalImport.classList.remove("hidden");
+      });
+      el("btn-import-close").addEventListener("click", () => modalImport.classList.add("hidden"));
+      el("btn-apply-import").addEventListener("click", () => {
+        const parsed = State.importSave(importCode.value);
+        if (!parsed) {
+          importError.classList.remove("hidden");
+          return;
+        }
+        State.save(parsed);
+        location.reload();
+      });
     },
 
     _bindAudioToggles() {

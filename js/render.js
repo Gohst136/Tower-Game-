@@ -15,8 +15,8 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, width, height);
 
-    const cx = width / 2;
-    const cy = height / 2;
+    const cx = world.cx !== undefined ? world.cx : width / 2;
+    const cy = world.cy !== undefined ? world.cy : height / 2;
 
     // background rings
     ctx.save();
@@ -50,6 +50,31 @@
       ctx.moveTo(cx, cy);
       ctx.lineTo(f.x, f.y);
       ctx.stroke();
+      ctx.restore();
+    });
+
+    // nova shockwave rings
+    (world.novaRings || []).forEach((r) => {
+      ctx.save();
+      ctx.globalAlpha = Utils.clamp(r.alpha, 0, 1);
+      ctx.strokeStyle = "#c9aaff";
+      ctx.lineWidth = 3;
+      ctx.shadowColor = "#a78bfa";
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // kill particles
+    (world.particles || []).forEach((p) => {
+      ctx.save();
+      ctx.globalAlpha = Utils.clamp(p.alpha, 0, 1);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     });
 

@@ -16,6 +16,21 @@
   UI.init(state, Game);
   UI.refreshTopbar();
   UI.refreshStats();
+  UI.refreshNova();
+
+  // iOS has no native install prompt, so show a one-time tip to use
+  // Share -> "Zum Home-Bildschirm" for the full standalone app experience.
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+  const tipDismissed = localStorage.getItem("towerIdleInstallTipDismissed") === "1";
+  const installTip = document.getElementById("ios-install-tip");
+  if (isIos && !isStandalone && !tipDismissed) {
+    installTip.classList.remove("hidden");
+  }
+  document.getElementById("btn-dismiss-tip").addEventListener("click", () => {
+    installTip.classList.add("hidden");
+    localStorage.setItem("towerIdleInstallTipDismissed", "1");
+  });
 
   function resizeCanvas() {
     const size = Render.resize(canvas);
@@ -54,6 +69,7 @@
       UI.refreshBattle(uiAccum);
       UI.refreshUpgradeList(UI.dom.workshopList, State.WORKSHOP_DEFS, "workshop");
       UI.refreshUpgradeList(UI.dom.labList, State.LAB_DEFS, "lab");
+      UI.refreshNova();
       uiAccum = 0;
     }
 

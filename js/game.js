@@ -4,14 +4,21 @@
 (function (global) {
   const TOWER_RADIUS = 22;
   const RATE_WINDOW = 5; // seconds, for offline cash/sec estimate
+  const NOVA_COOLDOWN = 10; // seconds
+  const NOVA_DAMAGE_MULT = 5; // relative to a single normal shot
 
   const Game = {
     state: null,
     entities: [],
     flashes: [],
+    particles: [],
+    novaRings: [],
     spawnQueue: [],
     spawnTimer: 0,
     attackCooldown: 0,
+    novaCooldown: 0,
+    novaCooldownMax: NOVA_COOLDOWN,
+    shake: 0,
     time: 0,
     rateWindowCash: 0,
     rateWindowTime: 0,
@@ -27,8 +34,12 @@
       this.spawnQueue = state.run.alive ? Enemies.waveComposition(state.run.wave) : [];
       this.entities = [];
       this.flashes = [];
+      this.particles = [];
+      this.novaRings = [];
       this.spawnTimer = 0;
       this.attackCooldown = 0;
+      this.novaCooldown = 0;
+      this.shake = 0;
     },
 
     startNewRun() {
@@ -47,9 +58,12 @@
       };
       this.entities = [];
       this.flashes = [];
+      this.particles = [];
+      this.novaRings = [];
       this.spawnQueue = Enemies.waveComposition(1);
       this.spawnTimer = 0;
       this.attackCooldown = 0;
+      this.novaCooldown = 0;
     },
 
     buyWorkshop(id) {
@@ -132,6 +146,7 @@
           s.run.towerHp -= e.damage;
           this.entities.splice(i, 1);
           Sfx.playImpact();
+          this.shake = Math.min(10, this.shake + 3);
           continue;
         }
         e.x += (dx / dist) * e.speed * dt;
@@ -144,33 +159,46 @@
       // --- attack ---
       this.attackCooldown -= dt;
       if (this.attackCooldown <= 0 && this.entities.length > 0) {
-        let target = null, best = Infinity;
-        for (const e of this.entities) {
-          const d = Math.hypot(e.x - cx, e.y - cy);
-          if (d <= stats.range && d < best) { best = d; target = e; }
-        }
+        const target = this._pickTarget(stats);
         if (target) {
           target.hp -= stats.damage;
           this.flashes.push({ x: target.x, y: target.y, alpha: 1 });
           Sfx.playShot();
-          if (target.hp <= 0) {
-            const idx = this.entities.indexOf(target);
-            if (idx >= 0) this.entities.splice(idx, 1);
-            const cashGain = target.cash * stats.cashMult;
-            s.run.cash += cashGain;
-            s.totalKills += 1;
-            this.rateWindowCash += cashGain;
-            Sfx.playKill(target.type);
-          }
+          if (target.hp <= 0) this._killEnemy(target, stats);
         }
         this.attackCooldown = stats.attackInterval;
       }
+
+      // --- nova cooldown ---
+      if (this.novaCooldown > 0) this.novaCooldown = Math.max(0, this.novaCooldown - dt);
 
       // --- fade flashes ---
       for (let i = this.flashes.length - 1; i >= 0; i--) {
         this.flashes[i].alpha -= dt * 6;
         if (this.flashes[i].alpha <= 0) this.flashes.splice(i, 1);
       }
+
+      // --- particles ---
+      for (let i = this.particles.length - 1; i >= 0; i--) {
+        const p = this.particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vx *= 0.9;
+        p.vy *= 0.9;
+        p.life -= dt;
+        if (p.life <= 0) this.particles.splice(i, 1);
+      }
+
+      // --- nova shockwave rings ---
+      for (let i = this.novaRings.length - 1; i >= 0; i--) {
+        const r = this.novaRings[i];
+        r.radius += 340 * dt;
+        r.alpha -= dt * 1.6;
+        if (r.alpha <= 0) this.novaRings.splice(i, 1);
+      }
+
+      // --- screen shake decay ---
+      if (this.shake > 0) this.shake = Math.max(0, this.shake - dt * 24);
 
       // --- rate tracking for offline estimate ---
       this.rateWindowTime += dt;
@@ -193,6 +221,71 @@
           this.startNewRun();
         }
       }
+    },
+
+    _pickTarget(stats) {
+      const mode = this.state.targetMode || "nearest";
+      let target = null;
+      let bestScore = mode === "strongest" ? -Infinity : Infinity;
+      for (const e of this.entities) {
+        const d = Math.hypot(e.x, e.y);
+        if (d > stats.range) continue;
+        const score = mode === "nearest" ? d : mode === "strongest" ? e.maxHp : e.hp;
+        const better = mode === "strongest" ? score > bestScore : score < bestScore;
+        if (better) { bestScore = score; target = e; }
+      }
+      return target;
+    },
+
+    _killEnemy(target, stats) {
+      const s = this.state;
+      const idx = this.entities.indexOf(target);
+      if (idx >= 0) this.entities.splice(idx, 1);
+      const cashGain = target.cash * stats.cashMult;
+      s.run.cash += cashGain;
+      s.totalKills += 1;
+      this.rateWindowCash += cashGain;
+      Sfx.playKill(target.type);
+      this._spawnParticles(target.x, target.y, target.color);
+      if (target.type === "boss") this.shake = Math.min(10, this.shake + 6);
+    },
+
+    _spawnParticles(x, y, color) {
+      const count = 6;
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+        const speed = 60 + Math.random() * 80;
+        this.particles.push({
+          x, y, color,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 0.35 + Math.random() * 0.2,
+          maxLife: 0.5,
+        });
+      }
+    },
+
+    novaReady() {
+      return this.novaCooldown <= 0 && this.state && this.state.run.alive;
+    },
+
+    activateNova() {
+      if (!this.novaReady()) return false;
+      const s = this.state;
+      const stats = Tower.effectiveStats(s);
+      const novaDamage = stats.damage * NOVA_DAMAGE_MULT;
+      const novaRadius = stats.range * 1.5;
+      const targets = this.entities.filter((e) => Math.hypot(e.x, e.y) <= novaRadius);
+      targets.forEach((e) => {
+        e.hp -= novaDamage;
+        this.flashes.push({ x: e.x, y: e.y, alpha: 1 });
+        if (e.hp <= 0) this._killEnemy(e, stats);
+      });
+      this.novaRings.push({ x: 0, y: 0, radius: 10, alpha: 1 });
+      this.shake = Math.min(14, this.shake + 10);
+      Sfx.playNova();
+      this.novaCooldown = NOVA_COOLDOWN;
+      return true;
     },
 
     _spawnEnemy(type, wave) {
@@ -219,12 +312,17 @@
 
     // Returns entities/flashes translated into screen-space for the renderer.
     worldForRender(width, height) {
-      const cx = width / 2, cy = height / 2;
+      const shakeX = this.shake > 0 ? (Math.random() - 0.5) * this.shake : 0;
+      const shakeY = this.shake > 0 ? (Math.random() - 0.5) * this.shake : 0;
+      const cx = width / 2 + shakeX, cy = height / 2 + shakeY;
       return {
         time: this.time,
+        cx, cy,
         range: Tower.effectiveStats(this.state).range,
         enemies: this.entities.map((e) => ({ ...e, x: e.x + cx, y: e.y + cy })),
         flashes: this.flashes.map((f) => ({ ...f, x: f.x + cx, y: f.y + cy })),
+        particles: this.particles.map((p) => ({ ...p, x: p.x + cx, y: p.y + cy, alpha: Math.max(0, p.life / p.maxLife) })),
+        novaRings: this.novaRings.map((r) => ({ ...r, x: r.x + cx, y: r.y + cy })),
       };
     },
   };

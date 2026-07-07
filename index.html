@@ -11,11 +11,16 @@
 <title>Tower Idle Defense</title>
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="assets/icon.svg" />
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png" />
 <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 <div id="app">
+
+  <div id="ios-install-tip" class="install-tip hidden">
+    <span>📲 Tipp: Teilen-Symbol antippen &rarr; <strong>„Zum Home-Bildschirm"</strong> für das volle App-Erlebnis</span>
+    <button id="btn-dismiss-tip" aria-label="Schließen">×</button>
+  </div>
 
   <!-- Top status bar -->
   <header id="topbar">
@@ -40,6 +45,17 @@
       <div id="tower-hp-text">100 / 100</div>
     </div>
     <canvas id="battle-canvas"></canvas>
+    <div id="target-mode-group">
+      <button class="target-btn active" data-mode="nearest">Nächster</button>
+      <button class="target-btn" data-mode="strongest">Stärkster</button>
+      <button class="target-btn" data-mode="weakest">Schwächster</button>
+    </div>
+    <button id="btn-nova" class="nova-btn">
+      <span id="nova-label">NOVA</span>
+      <svg id="nova-ring" viewBox="0 0 40 40">
+        <circle cx="20" cy="20" r="18" />
+      </svg>
+    </button>
     <div id="dps-readout">DPS: <span id="dps-value">0</span></div>
     <div id="run-controls">
       <button id="btn-auto-restart" class="toggle-btn">Auto-Neustart: Aus</button>
@@ -65,6 +81,10 @@
     <div class="settings-row">
       <button id="btn-toggle-music" class="toggle-btn wide">Musik: An</button>
       <button id="btn-toggle-sfx" class="toggle-btn wide">Soundeffekte: An</button>
+    </div>
+    <div class="settings-row">
+      <button id="btn-export-save" class="toggle-btn wide">Spielstand exportieren</button>
+      <button id="btn-import-save" class="toggle-btn wide">Spielstand importieren</button>
     </div>
     <button id="btn-reset-save" class="danger-btn">Spielstand löschen</button>
   </section>
@@ -101,6 +121,29 @@
       <h2>Willkommen zurück</h2>
       <p id="offline-text">Du warst weg.</p>
       <button id="btn-offline-close" class="primary-btn">Abholen</button>
+    </div>
+  </div>
+
+  <!-- Export save modal -->
+  <div id="modal-export" class="modal hidden">
+    <div class="modal-card">
+      <h2>Spielstand-Code</h2>
+      <p>Kopiere diesen Code und bewahre ihn auf (z.B. in Notizen), um deinen Fortschritt später wiederherzustellen oder auf ein anderes Gerät zu übertragen.</p>
+      <textarea id="export-code" class="code-box" readonly rows="5"></textarea>
+      <button id="btn-copy-export" class="primary-btn">Code kopieren</button>
+      <button id="btn-export-close" class="secondary-btn">Schließen</button>
+    </div>
+  </div>
+
+  <!-- Import save modal -->
+  <div id="modal-import" class="modal hidden">
+    <div class="modal-card">
+      <h2>Spielstand importieren</h2>
+      <p>Füge einen zuvor exportierten Code ein. Das überschreibt deinen aktuellen Fortschritt.</p>
+      <textarea id="import-code" class="code-box" rows="5" placeholder="Code hier einfügen…"></textarea>
+      <p id="import-error" class="error-text hidden">Ungültiger Code.</p>
+      <button id="btn-apply-import" class="primary-btn">Importieren &amp; Neu laden</button>
+      <button id="btn-import-close" class="secondary-btn">Abbrechen</button>
     </div>
   </div>
 

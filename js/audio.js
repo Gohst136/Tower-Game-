@@ -154,6 +154,35 @@
       });
     },
 
+    playNova() {
+      if (!this._readyForSfx()) return;
+      const ctx = this.ctx, t = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(220, t);
+      osc.frequency.exponentialRampToValueAtTime(50, t + 0.5);
+      const oscGain = ctx.createGain();
+      oscGain.gain.setValueAtTime(0.26, t);
+      oscGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+      osc.connect(oscGain).connect(this.sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.6);
+
+      const src = ctx.createBufferSource();
+      src.buffer = this.noiseBuffer;
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(2200, t);
+      filter.frequency.exponentialRampToValueAtTime(200, t + 0.4);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+      src.connect(filter).connect(g).connect(this.sfxGain);
+      src.start(t);
+      src.stop(t + 0.5);
+    },
+
     playGameOver() {
       if (!this._readyForSfx()) return;
       const ctx = this.ctx, t = ctx.currentTime;

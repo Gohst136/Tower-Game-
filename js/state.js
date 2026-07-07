@@ -37,6 +37,7 @@
       autoRestart: false,
       musicEnabled: true,
       sfxEnabled: true,
+      targetMode: "nearest", // "nearest" | "strongest" | "weakest"
       lastSaveTime: Date.now(),
       // recent rate tracking (for offline estimate)
       recentCashPerSecond: 0,
@@ -110,6 +111,23 @@
     localStorage.removeItem(SAVE_KEY);
   }
 
+  function exportSave(state) {
+    const json = JSON.stringify(state);
+    return btoa(unescape(encodeURIComponent(json)));
+  }
+
+  // Returns the parsed state object, or null if the code is invalid.
+  function importSave(code) {
+    try {
+      const json = decodeURIComponent(escape(atob(code.trim())));
+      const obj = JSON.parse(json);
+      if (!obj || typeof obj !== "object" || typeof obj.coins !== "number" || !obj.run) return null;
+      return obj;
+    } catch (e) {
+      return null;
+    }
+  }
+
   global.State = {
     SAVE_KEY,
     WORKSHOP_DEFS,
@@ -121,5 +139,7 @@
     save,
     computeOfflineReward,
     resetSave,
+    exportSave,
+    importSave,
   };
 })(window);
