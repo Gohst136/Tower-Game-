@@ -14,6 +14,7 @@
   Game.onRunEnd = (wave, coins) => UI.showGameover(wave, coins);
   Game.onEliteStart = (elite) => UI.showEliteToast(elite);
   Game.onAchievement = (def) => UI.showAchievementToast(def);
+  Game.onResearchComplete = (def, level) => UI.showResearchToast(def, level);
 
   UI.init(state, Game);
   UI.refreshTopbar();
@@ -21,6 +22,11 @@
   UI.refreshNova();
   UI.refreshElite();
   UI.refreshBoss();
+
+  // A research project already running when we last saved may have
+  // finished while the game was closed - catch it up immediately.
+  Game.checkResearch();
+  UI.refreshLabList();
 
   // Daily login bonus: a simple calendar-day comparison, no backend needed.
   (function checkDailyLogin() {
@@ -91,18 +97,23 @@
     dt = Utils.clamp(dt, 0, 0.25); // pause effectively when tab is backgrounded
 
     Game.update(dt);
+    const completedResearch = Game.checkResearch();
 
     uiAccum += dt;
     if (uiAccum >= 1 / 15) {
       UI.refreshTopbar();
       UI.refreshBattle(uiAccum);
       UI.refreshUpgradeList(UI.dom.workshopList, State.WORKSHOP_DEFS, "workshop");
-      UI.refreshUpgradeList(UI.dom.labList, State.LAB_DEFS, "lab");
+      UI.refreshLabList();
       UI.refreshNova();
       UI.refreshElite();
       UI.refreshBoss();
       UI.refreshAscendPreview();
       uiAccum = 0;
+    } else if (completedResearch) {
+      // a project just finished mid-throttle window - refresh right away
+      // so the queue slot frees up immediately rather than up to ~66ms late
+      UI.refreshLabList();
     }
 
     saveAccum += dt;

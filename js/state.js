@@ -15,15 +15,20 @@
     { id: "cash", name: "Cash-Extraktor", icon: "💰", desc: "+10% Cash-Gewinn", baseCost: 20, costMult: 1.2 },
   ];
 
-  // Lab: permanent across runs, bought with Coins
+  // Lab: a timed research queue (one project at a time). Starting a project
+  // spends Coins immediately; the level is only applied once its duration
+  // has elapsed - including while the game isn't open, since completion is
+  // just an absolute-timestamp check. Persists until the next Ascension.
   const LAB_DEFS = [
-    { id: "labDmg", name: "Schadenslabor", icon: "🔬", desc: "+5% Turmschaden (permanent)", baseCost: 5, costMult: 1.25 },
-    { id: "labHp", name: "Rumpfverstärkung", icon: "🏰", desc: "+5% Maximale HP (permanent)", baseCost: 5, costMult: 1.25 },
-    { id: "labCash", name: "Handelsroute", icon: "📈", desc: "+5% Cash-Gewinn (permanent)", baseCost: 5, costMult: 1.25 },
-    { id: "labCoin", name: "Coin-Raffinerie", icon: "🪙", desc: "+5% Coin-Gewinn (permanent)", baseCost: 8, costMult: 1.3 },
-    { id: "labStart", name: "Startkapital", icon: "🏦", desc: "+25 Cash Startbonus (permanent)", baseCost: 4, costMult: 1.2 },
-    { id: "labRegen", name: "Auto-Reparatur", icon: "⚙️", desc: "+5% HP-Regeneration (permanent)", baseCost: 6, costMult: 1.25 },
+    { id: "labDmg", name: "Schadenslabor", icon: "🔬", desc: "+5% Turmschaden (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 3 },
+    { id: "labHp", name: "Rumpfverstärkung", icon: "🏰", desc: "+5% Maximale HP (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 3 },
+    { id: "labCash", name: "Handelsroute", icon: "📈", desc: "+5% Cash-Gewinn (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 4 },
+    { id: "labCoin", name: "Coin-Raffinerie", icon: "🪙", desc: "+5% Coin-Gewinn (permanent)", baseCost: 8, costMult: 1.3, baseMinutes: 8 },
+    { id: "labStart", name: "Startkapital", icon: "🏦", desc: "+25 Cash Startbonus (permanent)", baseCost: 4, costMult: 1.2, baseMinutes: 2 },
+    { id: "labRegen", name: "Auto-Reparatur", icon: "⚙️", desc: "+5% HP-Regeneration (permanent)", baseCost: 6, costMult: 1.25, baseMinutes: 5 },
   ];
+  const RESEARCH_DURATION_MULT = 1.22; // per level, same spirit as costMult
+  const MAX_RESEARCH_SECONDS = 4 * 3600; // cap a single project at 4h
 
   // Talents: bought with Cores (earned via Ascension), survive an Ascension
   const TALENT_DEFS = [
@@ -43,6 +48,7 @@
       bossKills: 0,
       runsCompleted: 0,
       lab: {}, // id -> level
+      research: null, // { id, startedAt, durationMs } | null - one active project
       autoRestart: false,
       musicEnabled: true,
       sfxEnabled: true,
@@ -87,6 +93,12 @@
     return map[id] || 0;
   }
 
+  // Research duration in milliseconds for starting `def` at its current level.
+  function researchDurationMs(def, level) {
+    const seconds = Utils.clamp(def.baseMinutes * 60 * Math.pow(RESEARCH_DURATION_MULT, level), 1, MAX_RESEARCH_SECONDS);
+    return seconds * 1000;
+  }
+
   function load() {
     let s = null;
     try {
@@ -102,6 +114,7 @@
     const merged = Object.assign(fresh, s);
     merged.run = Object.assign(fresh.run, s.run || {});
     merged.lab = s.lab || {};
+    merged.research = s.research || null;
 
     const now = Date.now();
     const offlineMs = now - (s.lastSaveTime || now);
@@ -166,6 +179,7 @@
     defaultState,
     pendingCores,
     upgradeCost,
+    researchDurationMs,
     getLevel,
     load,
     save,

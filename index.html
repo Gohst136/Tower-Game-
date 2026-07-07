@@ -63,6 +63,11 @@
       <span>📅</span>
       <span id="login-toast-text">Tagesbonus!</span>
     </div>
+
+    <div id="research-toast" class="toast research-toast hidden">
+      <span>🔬</span>
+      <span id="research-toast-text">Forschung abgeschlossen!</span>
+    </div>
   </div>
 
   <!-- Battle view -->
@@ -99,9 +104,18 @@
     <div id="workshop-list" class="upgrade-list"></div>
   </section>
 
-  <!-- Lab view (permanent upgrades bought with coins) -->
+  <!-- Lab view: a timed research queue, bought with coins -->
   <section id="view-lab" class="view">
-    <h2 class="view-title">Labor <span class="view-sub">(Coins · permanent)</span></h2>
+    <h2 class="view-title">Labor <span class="view-sub">(Coins · Forschungs-Queue)</span></h2>
+    <div id="research-active" class="research-box hidden">
+      <div class="research-row">
+        <span id="research-icon">🔬</span>
+        <span id="research-name">Projekt</span>
+        <span id="research-time">0:00</span>
+      </div>
+      <div class="research-bar"><div id="research-fill"></div></div>
+    </div>
+    <p id="research-idle-hint" class="research-idle-hint">Kein aktives Projekt – wähle unten eine Forschung. Sie läuft über echte Zeit weiter, auch wenn du das Spiel schließt.</p>
     <div id="lab-list" class="upgrade-list"></div>
   </section>
 

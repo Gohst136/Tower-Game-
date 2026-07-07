@@ -36,6 +36,7 @@
     onHpChange: null,
     onEliteStart: null,
     onAchievement: null,
+    onResearchComplete: null,
 
     init(state) {
       this.state = state;
@@ -96,15 +97,34 @@
       return true;
     },
 
-    buyLab(id) {
+    // Starts a timed research project (one slot). Costs Coins up front;
+    // the level only applies once checkResearch() sees it has elapsed -
+    // including while the game was closed, since it's a plain timestamp check.
+    startResearch(id) {
+      const s = this.state;
+      if (s.research) return false; // slot busy
       const def = State.LAB_DEFS.find((d) => d.id === id);
       if (!def) return false;
-      const level = State.getLevel(this.state.lab, id);
+      const level = State.getLevel(s.lab, id);
       const cost = State.upgradeCost(def, level);
-      if (this.state.coins < cost) return false;
-      this.state.coins -= cost;
-      this.state.lab[id] = level + 1;
+      if (s.coins < cost) return false;
+      s.coins -= cost;
+      s.research = { id, startedAt: Date.now(), durationMs: State.researchDurationMs(def, level) };
       return true;
+    },
+
+    // Independent of run state (also runs during game-over / idle screens).
+    // Returns the completed def if a project just finished, else null.
+    checkResearch() {
+      const s = this.state;
+      if (!s.research) return null;
+      if (Date.now() < s.research.startedAt + s.research.durationMs) return null;
+      const def = State.LAB_DEFS.find((d) => d.id === s.research.id);
+      const level = State.getLevel(s.lab, s.research.id);
+      s.lab[s.research.id] = level + 1;
+      s.research = null;
+      if (this.onResearchComplete && def) this.onResearchComplete(def, level + 1);
+      return def;
     },
 
     buyTalent(id) {
@@ -130,6 +150,7 @@
       s.ascensionCount = (s.ascensionCount || 0) + 1;
       s.coins = 0;
       s.lab = {};
+      s.research = null;
       this.startNewRun();
       this.checkAchievements();
       return cores;

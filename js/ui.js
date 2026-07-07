@@ -31,11 +31,15 @@
       this.dom.achievementToast = el("achievement-toast");
       this.dom.loginToast = el("login-toast");
       this.dom.modalTutorial = el("modal-tutorial");
+      this.dom.researchActive = el("research-active");
+      this.dom.researchFill = el("research-fill");
+      this.dom.researchIdleHint = el("research-idle-hint");
+      this.dom.researchToast = el("research-toast");
 
       this._bindTabs();
       this._bindRunControls();
       this._buildUpgradeList(this.dom.workshopList, State.WORKSHOP_DEFS, "workshop");
-      this._buildUpgradeList(this.dom.labList, State.LAB_DEFS, "lab");
+      this._buildLabList();
       this._buildUpgradeList(this.dom.talentList, State.TALENT_DEFS, "talent");
       this._bindGameover();
       this._bindOffline();
@@ -60,7 +64,7 @@
       {
         icon: "🛠️",
         title: "Werkstatt & Labor",
-        body: "In der Werkstatt kaufst du Upgrades mit Cash – sie gelten nur für den aktuellen Run. Stirbt dein Turm, verdienst du Coins, die du im Labor für permanente Upgrades ausgibst.",
+        body: "In der Werkstatt kaufst du Upgrades mit Cash – sie gelten nur für den aktuellen Run. Stirbt dein Turm, verdienst du Coins. Im Labor startest du damit Forschungsprojekte, die über echte Zeit laufen (auch offline) und dauerhaft bleiben.",
       },
       {
         icon: "⚡",
@@ -115,13 +119,13 @@
           return;
         }
         const ok = confirm(
-          `Aufstieg durchführen? Du erhältst ${preview} Kerne, verlierst aber deine aktuellen Coins (${Math.floor(this.state.coins)}) und alle Labor-Stufen. Talente und Bestwerte bleiben erhalten.`
+          `Aufstieg durchführen? Du erhältst ${preview} Kerne, verlierst aber deine aktuellen Coins (${Math.floor(this.state.coins)}), alle Labor-Stufen und ein laufendes Forschungsprojekt. Talente und Bestwerte bleiben erhalten.`
         );
         if (!ok) return;
         const earned = this.game.ascend();
         if (earned > 0) {
           Sfx.playAchievement();
-          this.refreshUpgradeList(this.dom.labList, State.LAB_DEFS, "lab");
+          this.refreshLabList();
           this.refreshUpgradeList(this.dom.talentList, State.TALENT_DEFS, "talent");
           this.refreshAscendPreview();
           this.refreshTopbar();
@@ -284,14 +288,13 @@
             <div class="upgrade-desc">${def.desc}</div>
             <div class="upgrade-level" data-role="level">Stufe 0</div>
           </div>
-          <button class="upgrade-buy ${kind !== "workshop" ? "lab-buy" : ""}" data-role="buy">
+          <button class="upgrade-buy ${kind === "talent" ? "lab-buy" : ""}" data-role="buy">
             <span data-role="cost">0</span>
           </button>
         `;
         const buyBtn = card.querySelector('[data-role="buy"]');
         buyBtn.addEventListener("click", () => {
-          const ok =
-            kind === "lab" ? this.game.buyLab(def.id) : kind === "talent" ? this.game.buyTalent(def.id) : this.game.buyWorkshop(def.id);
+          const ok = kind === "talent" ? this.game.buyTalent(def.id) : this.game.buyWorkshop(def.id);
           if (ok) {
             Sfx.playPurchase();
             this.refreshUpgradeList(container, defs, kind);
@@ -304,8 +307,8 @@
     },
 
     refreshUpgradeList(container, defs, kind) {
-      const wallet = kind === "lab" ? this.state.coins : kind === "talent" ? this.state.cores : this.state.run.cash;
-      const levels = kind === "lab" ? this.state.lab : kind === "talent" ? this.state.talents : this.state.run.workshop;
+      const wallet = kind === "talent" ? this.state.cores : this.state.run.cash;
+      const levels = kind === "talent" ? this.state.talents : this.state.run.workshop;
       defs.forEach((def) => {
         const card = container.querySelector(`[data-id="${def.id}"]`);
         if (!card) return;
@@ -316,6 +319,76 @@
         const buyBtn = card.querySelector('[data-role="buy"]');
         buyBtn.disabled = wallet < cost;
       });
+    },
+
+    _buildLabList() {
+      const container = this.dom.labList;
+      container.innerHTML = "";
+      State.LAB_DEFS.forEach((def) => {
+        const card = document.createElement("div");
+        card.className = "upgrade-card";
+        card.innerHTML = `
+          <div class="upgrade-icon">${def.icon}</div>
+          <div class="upgrade-info">
+            <div class="upgrade-name">${def.name}</div>
+            <div class="upgrade-desc">${def.desc}</div>
+            <div class="upgrade-level" data-role="level">Stufe 0</div>
+          </div>
+          <button class="upgrade-buy lab-buy" data-role="buy">
+            <span data-role="cost">0</span>
+            <span class="upgrade-duration" data-role="duration"></span>
+          </button>
+        `;
+        card.querySelector('[data-role="buy"]').addEventListener("click", () => {
+          if (this.game.startResearch(def.id)) {
+            Sfx.playPurchase();
+            this.refreshLabList();
+          }
+        });
+        card.dataset.id = def.id;
+        container.appendChild(card);
+      });
+      this.refreshLabList();
+    },
+
+    refreshLabList() {
+      const s = this.state;
+      const busy = !!s.research;
+      State.LAB_DEFS.forEach((def) => {
+        const card = this.dom.labList.querySelector(`[data-id="${def.id}"]`);
+        if (!card) return;
+        const level = State.getLevel(s.lab, def.id);
+        const cost = State.upgradeCost(def, level);
+        const durationMs = State.researchDurationMs(def, level);
+        card.querySelector('[data-role="level"]').textContent = "Stufe " + level;
+        card.querySelector('[data-role="cost"]').textContent = Utils.formatNumber(cost);
+        card.querySelector('[data-role="duration"]').textContent = Utils.formatTime(durationMs / 1000);
+        const buyBtn = card.querySelector('[data-role="buy"]');
+        buyBtn.disabled = busy || s.coins < cost;
+      });
+      this.refreshResearchProgress();
+    },
+
+    refreshResearchProgress() {
+      const research = this.state.research;
+      this.dom.researchActive.classList.toggle("hidden", !research);
+      this.dom.researchIdleHint.classList.toggle("hidden", !!research);
+      if (!research) return;
+      const def = State.LAB_DEFS.find((d) => d.id === research.id);
+      const elapsed = Date.now() - research.startedAt;
+      const ratio = Utils.clamp(elapsed / research.durationMs, 0, 1);
+      const remaining = Math.max(0, (research.startedAt + research.durationMs - Date.now()) / 1000);
+      el("research-icon").textContent = def ? def.icon : "🔬";
+      el("research-name").textContent = def ? def.name : "Projekt";
+      el("research-time").textContent = Utils.formatTime(remaining);
+      this.dom.researchFill.style.width = ratio * 100 + "%";
+    },
+
+    showResearchToast(def, level) {
+      el("research-toast-text").textContent = `${def.name} Stufe ${level} abgeschlossen!`;
+      this.dom.researchToast.classList.remove("hidden");
+      clearTimeout(this._researchToastTimer);
+      this._researchToastTimer = setTimeout(() => this.dom.researchToast.classList.add("hidden"), 3500);
     },
 
     refreshTopbar() {
