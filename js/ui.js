@@ -181,7 +181,7 @@
       this.dom.abilityRing = el("ability-ring").querySelector("circle");
       this.dom.abilityIconLabel = el("ability-icon-label");
       this.dom.abilityBtn.addEventListener("click", () => {
-        this.game.activateAbility();
+        if (this.game.activateAbility()) Utils.vibrate(25);
       });
     },
 
@@ -232,6 +232,7 @@
           const acted = level === 0 ? this.game.buyTalent(talentDef.id) : this.game.equipAbility(abilityDef.id);
           if (acted) {
             Sfx.playPurchase();
+            Utils.vibrate(8);
             this.refreshAbilityList();
             this.refreshAbilityButton();
           }
@@ -377,6 +378,7 @@
           const ok = kind === "talent" ? this.game.buyTalent(def.id) : this.game.buyWorkshop(def.id);
           if (ok) {
             Sfx.playPurchase();
+            Utils.vibrate(8);
             this.refreshUpgradeList(container, defs, kind);
           }
         });
@@ -422,6 +424,7 @@
         card.querySelector('[data-role="buy"]').addEventListener("click", () => {
           if (this.game.startResearch(def.id)) {
             Sfx.playPurchase();
+            Utils.vibrate(8);
             this.refreshLabList();
           }
         });

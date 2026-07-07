@@ -11,6 +11,7 @@
 <title>Tower Idle Defense</title>
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+<link rel="icon" sizes="192x192" href="assets/icon-192.png" type="image/png" />
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png" />
 <link rel="stylesheet" href="style.css" />
 </head>
@@ -20,6 +21,12 @@
   <div id="ios-install-tip" class="install-tip hidden">
     <span>📲 Tipp: Teilen-Symbol antippen &rarr; <strong>„Zum Home-Bildschirm"</strong> für das volle App-Erlebnis</span>
     <button id="btn-dismiss-tip" aria-label="Schließen">×</button>
+  </div>
+
+  <div id="android-install-tip" class="install-tip hidden">
+    <span>📲 Tower Idle Defense als App installieren?</span>
+    <button id="btn-install-android" class="install-action-btn">Installieren</button>
+    <button id="btn-dismiss-android-tip" aria-label="Schließen">×</button>
   </div>
 
   <!-- Everything below anchors its absolutely-positioned overlays (badges,

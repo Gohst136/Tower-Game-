@@ -32,5 +32,15 @@
     return min + Math.random() * (max - min);
   }
 
-  global.Utils = { formatNumber, formatTime, clamp, randRange };
+  // Haptic feedback - supported on Android Chrome, silently unsupported on
+  // iOS Safari (no API at all) so this is always safe to call anywhere.
+  function vibrate(pattern) {
+    try {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    } catch (e) {
+      // ignore - some browsers throw if called outside a user gesture
+    }
+  }
+
+  global.Utils = { formatNumber, formatTime, clamp, randRange, vibrate };
 })(window);

@@ -1,4 +1,12 @@
 (function () {
+  // Offline support + instant repeat loads. Registered lazily after load so
+  // it never competes with the game itself for bandwidth on first visit.
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
+
   const canvas = document.getElementById("battle-canvas");
   const ctx = canvas.getContext("2d");
 
@@ -11,10 +19,10 @@
   document.addEventListener("touchstart", unlockAudio, { once: true });
 
   Game.init(state);
-  Game.onRunEnd = (wave, coins) => UI.showGameover(wave, coins);
-  Game.onEliteStart = (elite) => UI.showEliteToast(elite);
-  Game.onAchievement = (def) => UI.showAchievementToast(def);
-  Game.onResearchComplete = (def, level) => UI.showResearchToast(def, level);
+  Game.onRunEnd = (wave, coins) => { UI.showGameover(wave, coins); Utils.vibrate([60, 30, 60]); };
+  Game.onEliteStart = (elite) => { UI.showEliteToast(elite); Utils.vibrate(40); };
+  Game.onAchievement = (def) => { UI.showAchievementToast(def); Utils.vibrate([15, 40, 15]); };
+  Game.onResearchComplete = (def, level) => { UI.showResearchToast(def, level); Utils.vibrate(20); };
 
   UI.init(state, Game);
   UI.refreshTopbar();
@@ -42,7 +50,7 @@
     state.totalCoinsEarned += reward;
     // Skip the toast on someone's very first-ever session - the tutorial
     // already covers orientation and "Tag 1 Bonus" has no context yet.
-    if (!isNewSave) UI.showLoginToast(state.loginStreak, reward);
+    if (!isNewSave) { UI.showLoginToast(state.loginStreak, reward); Utils.vibrate(20); }
   })();
 
   // First-ever session: show a short onboarding flow instead of dropping
@@ -65,6 +73,32 @@
   document.getElementById("btn-dismiss-tip").addEventListener("click", () => {
     installTip.classList.add("hidden");
     localStorage.setItem("towerIdleInstallTipDismissed", "1");
+  });
+
+  // Chrome/Android: capture the native install prompt so we can trigger it
+  // from our own button instead of relying on the easy-to-miss browser UI.
+  const androidTip = document.getElementById("android-install-tip");
+  const androidTipDismissed = localStorage.getItem("towerIdleAndroidTipDismissed") === "1";
+  let deferredInstallPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if (!isStandalone && !androidTipDismissed) androidTip.classList.remove("hidden");
+  });
+  document.getElementById("btn-install-android").addEventListener("click", async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    androidTip.classList.add("hidden");
+  });
+  document.getElementById("btn-dismiss-android-tip").addEventListener("click", () => {
+    androidTip.classList.add("hidden");
+    localStorage.setItem("towerIdleAndroidTipDismissed", "1");
+  });
+  window.addEventListener("appinstalled", () => {
+    androidTip.classList.add("hidden");
+    localStorage.setItem("towerIdleAndroidTipDismissed", "1");
   });
 
   function resizeCanvas() {
@@ -143,5 +177,23 @@
     btn.addEventListener("click", () => {
       if (btn.dataset.view === "view-stats") UI.refreshStats();
     });
+  });
+
+  // Treat open modals / non-battle tabs as in-app "history" so Android's
+  // back button (or a stray swipe-back on any platform) closes them first
+  // instead of immediately exiting the whole game.
+  history.pushState({ towerIdle: true }, "");
+  window.addEventListener("popstate", () => {
+    const openModal = document.querySelector(".modal:not(.hidden)");
+    const activeTab = document.querySelector(".tab-btn.active");
+    let handled = false;
+    if (openModal) {
+      openModal.classList.add("hidden");
+      handled = true;
+    } else if (activeTab && activeTab.dataset.view !== "view-battle") {
+      document.querySelector('[data-view="view-battle"]').click();
+      handled = true;
+    }
+    if (handled) history.pushState({ towerIdle: true }, "");
   });
 })();
