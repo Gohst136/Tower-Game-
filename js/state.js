@@ -96,7 +96,7 @@
       console.warn("Save konnte nicht geladen werden", e);
     }
     const fresh = defaultState();
-    if (!s) return { state: fresh, offlineSeconds: 0 };
+    if (!s) return { state: fresh, offlineSeconds: 0, isNewSave: true };
 
     // merge shallowly to survive schema additions
     const merged = Object.assign(fresh, s);
@@ -106,7 +106,7 @@
     const now = Date.now();
     const offlineMs = now - (s.lastSaveTime || now);
     const offlineSeconds = Utils.clamp(offlineMs / 1000, 0, Infinity);
-    return { state: merged, offlineSeconds };
+    return { state: merged, offlineSeconds, isNewSave: false };
   }
 
   function save(state) {

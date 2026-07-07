@@ -2,7 +2,7 @@
   const canvas = document.getElementById("battle-canvas");
   const ctx = canvas.getContext("2d");
 
-  const { state, offlineSeconds } = State.load();
+  const { state, offlineSeconds, isNewSave } = State.load();
 
   Sfx.sfxEnabled = state.sfxEnabled;
   Sfx.musicEnabled = state.musicEnabled;
@@ -34,8 +34,18 @@
     const reward = 10 * Math.min(state.loginStreak, 7);
     state.coins += reward;
     state.totalCoinsEarned += reward;
-    UI.showLoginToast(state.loginStreak, reward);
+    // Skip the toast on someone's very first-ever session - the tutorial
+    // already covers orientation and "Tag 1 Bonus" has no context yet.
+    if (!isNewSave) UI.showLoginToast(state.loginStreak, reward);
   })();
+
+  // First-ever session: show a short onboarding flow instead of dropping
+  // the player straight into five tabs' worth of systems. Existing saves
+  // (isNewSave === false) never see this, even after this feature ships.
+  if (isNewSave) {
+    UI.showTutorial();
+    State.save(state); // guarantees it won't repeat even on an instant close
+  }
 
   // iOS has no native install prompt, so show a one-time tip to use
   // Share -> "Zum Home-Bildschirm" for the full standalone app experience.

@@ -30,6 +30,7 @@
       this.dom.achievementsList = el("achievements-list");
       this.dom.achievementToast = el("achievement-toast");
       this.dom.loginToast = el("login-toast");
+      this.dom.modalTutorial = el("modal-tutorial");
 
       this._bindTabs();
       this._bindRunControls();
@@ -45,8 +46,65 @@
       this._bindSaveTransfer();
       this._bindAscend();
       this._bindShare();
+      this._bindTutorial();
       this.setAutoRestartLabel();
       this.refreshAscendPreview();
+    },
+
+    TUTORIAL_STEPS: [
+      {
+        icon: "🏰",
+        title: "Willkommen",
+        body: "Dein Turm im Zentrum verteidigt sich automatisch gegen Wellen von Gegnern, die von allen Seiten kommen. Du musst nichts steuern – aber du kannst helfen.",
+      },
+      {
+        icon: "🛠️",
+        title: "Werkstatt & Labor",
+        body: "In der Werkstatt kaufst du Upgrades mit Cash – sie gelten nur für den aktuellen Run. Stirbt dein Turm, verdienst du Coins, die du im Labor für permanente Upgrades ausgibst.",
+      },
+      {
+        icon: "⚡",
+        title: "Nova & Zielmodus",
+        body: "Der NOVA-Knopf löst nach kurzer Aufladung Flächenschaden aus. Über die Buttons oben im Kampf wählst du, welchen Gegner der Turm zuerst angreift.",
+      },
+      {
+        icon: "⭐",
+        title: "Aufstieg",
+        body: "Sobald du genug Coins verdient hast, schaltest du im Aufstieg-Tab dauerhafte Talente gegen Kerne frei – das setzt Coins & Labor zurück, bleibt aber für immer. Manche Gegner haben außerdem Schilde oder teilen sich beim Tod – beobachte und reagiere!",
+      },
+    ],
+
+    _bindTutorial() {
+      this._tutorialStep = 0;
+      el("btn-tutorial-next").addEventListener("click", () => {
+        if (this._tutorialStep >= this.TUTORIAL_STEPS.length - 1) {
+          this.hideTutorial();
+        } else {
+          this._tutorialStep += 1;
+          this._renderTutorialStep();
+        }
+      });
+      el("btn-tutorial-skip").addEventListener("click", () => this.hideTutorial());
+    },
+
+    showTutorial() {
+      this._tutorialStep = 0;
+      this._renderTutorialStep();
+      this.dom.modalTutorial.classList.remove("hidden");
+    },
+
+    hideTutorial() {
+      this.dom.modalTutorial.classList.add("hidden");
+    },
+
+    _renderTutorialStep() {
+      const step = this.TUTORIAL_STEPS[this._tutorialStep];
+      const isLast = this._tutorialStep === this.TUTORIAL_STEPS.length - 1;
+      el("tutorial-icon").textContent = step.icon;
+      el("tutorial-title").textContent = step.title;
+      el("tutorial-body").textContent = step.body;
+      el("btn-tutorial-next").textContent = isLast ? "Los geht's!" : "Weiter";
+      el("tutorial-dots").innerHTML = this.TUTORIAL_STEPS.map((_, i) => `<span class="${i === this._tutorialStep ? "active" : ""}"></span>`).join("");
     },
 
     _bindAscend() {
