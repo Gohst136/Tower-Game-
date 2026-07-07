@@ -272,6 +272,7 @@
         }
         e.x += (dx / dist) * e.speed * speedFactor * dt;
         e.y += (dy / dist) * e.speed * speedFactor * dt;
+        e.spin += e.spinSpeed * dt;
       }
 
       // --- boss ranged attacks (poke the tower from a distance, not just on contact) ---
@@ -437,6 +438,7 @@
           type: "splitter",
           isSplitChild: true,
           color: target.color,
+          shape: "fracture",
           radius: Math.max(4, target.radius * 0.65),
           speed: target.speed * 1.1,
           maxHp: target.maxHp * 0.4,
@@ -445,6 +447,8 @@
           cash: target.cash * 0.4,
           x: target.x + Math.cos(angle) * offset,
           y: target.y + Math.sin(angle) * offset,
+          spin: Math.random() * Math.PI * 2,
+          spinSpeed: (Math.random() - 0.5) * 1.6,
         });
       }
     },
@@ -503,7 +507,7 @@
         this.flashes.push({ x: e.x, y: e.y, alpha: 1 });
         if (e.hp <= 0) this._killEnemy(e, stats);
       });
-      this.rings.push({ x: 0, y: 0, radius: 10, alpha: 1, color: "#c9aaff", growth: 340 });
+      this.rings.push({ x: 0, y: 0, radius: 10, alpha: 1, color: "#ffd166", growth: 340 });
       this.shake = Math.min(14, this.shake + 10);
       Sfx.playNova();
     },
@@ -521,7 +525,7 @@
       const tuning = ABILITY_TUNING.slow;
       this.slowUntil = this.time + tuning.durationSec;
       this.slowFactor = tuning.factor;
-      this.rings.push({ x: 0, y: 0, radius: 10, alpha: 1, color: "#7ee8ff", growth: 260 });
+      this.rings.push({ x: 0, y: 0, radius: 10, alpha: 1, color: "#8f7aff", growth: 260 });
       Sfx.playSlow();
     },
 
@@ -568,6 +572,7 @@
       const entity = {
         type,
         color: enemyStats.color,
+        shape: enemyStats.shape,
         radius: enemyStats.radius,
         speed: enemyStats.speed,
         maxHp: enemyStats.maxHp,
@@ -576,6 +581,8 @@
         cash: enemyStats.cash,
         x: Math.cos(angle) * spawnRadius,
         y: Math.sin(angle) * spawnRadius,
+        spin: Math.random() * Math.PI * 2,
+        spinSpeed: (Math.random() - 0.5) * 1.2,
       };
       if (enemyStats.shieldHp) {
         entity.shieldHp = enemyStats.shieldHp;

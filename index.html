@@ -7,8 +7,8 @@
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="description" content="Idle Tower Defense - verteidige deinen Turm gegen endlose Wellen von Gegnern." />
-<title>Tower Idle Defense</title>
+<meta name="description" content="Planet Defender - Idle-Weltraumverteidigung. Verteidige deinen Planeten vor endlosen Meteoriten-Wellen und Alien-Mutterschiffen." />
+<title>Planet Defender</title>
 <link rel="manifest" href="manifest.json" />
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
 <link rel="icon" sizes="192x192" href="assets/icon-192.png" type="image/png" />
@@ -24,7 +24,7 @@
   </div>
 
   <div id="android-install-tip" class="install-tip hidden">
-    <span>📲 Tower Idle Defense als App installieren?</span>
+    <span>📲 Planet Defender als App installieren?</span>
     <button id="btn-install-android" class="install-action-btn">Installieren</button>
     <button id="btn-dismiss-android-tip" aria-label="Schließen">×</button>
   </div>
@@ -41,11 +41,11 @@
       <span class="stat-value" id="wave-value">1</span>
     </div>
     <div class="stat-pill">
-      <span class="stat-label">Cash</span>
+      <span class="stat-label">Rohstoffe</span>
       <span class="stat-value" id="cash-value">0</span>
     </div>
     <div class="stat-pill coin">
-      <span class="stat-label">Coins</span>
+      <span class="stat-label">Kristalle</span>
       <span class="stat-value" id="coins-value">0</span>
     </div>
   </header>
@@ -84,7 +84,7 @@
       <div id="tower-hp-text">100 / 100</div>
     </div>
     <div id="boss-hp-wrap" class="hidden">
-      <div id="boss-hp-label">👑 BOSS</div>
+      <div id="boss-hp-label">👽 MUTTERSCHIFF</div>
       <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
     </div>
     <canvas id="battle-canvas"></canvas>
@@ -105,15 +105,15 @@
     </div>
   </section>
 
-  <!-- Workshop view (run upgrades bought with cash) -->
+  <!-- Workshop view (run upgrades bought with resources) -->
   <section id="view-workshop" class="view">
-    <h2 class="view-title">Werkstatt <span class="view-sub">(Cash · pro Run)</span></h2>
+    <h2 class="view-title">Werkstatt <span class="view-sub">(Rohstoffe · pro Run)</span></h2>
     <div id="workshop-list" class="upgrade-list"></div>
   </section>
 
-  <!-- Lab view: a timed research queue, bought with coins -->
+  <!-- Lab view: a timed research queue, bought with crystals -->
   <section id="view-lab" class="view">
-    <h2 class="view-title">Labor <span class="view-sub">(Coins · Forschungs-Queue)</span></h2>
+    <h2 class="view-title">Labor <span class="view-sub">(Kristalle · Forschungs-Queue)</span></h2>
     <div id="research-active-list"></div>
     <p id="research-idle-hint" class="research-idle-hint">Wähle unten eine Forschung. Sie läuft über echte Zeit weiter, auch wenn du das Spiel schließt.</p>
     <div id="lab-list" class="upgrade-list"></div>
@@ -123,7 +123,7 @@
   <section id="view-talents" class="view">
     <h2 class="view-title">Aufstieg <span class="view-sub">(Kerne · für immer)</span></h2>
     <div class="ascend-box">
-      <p class="ascend-desc">Ein Aufstieg setzt Coins und Labor zurück und gibt dir dauerhafte Kerne basierend auf allen jemals verdienten Coins. Talente und Bestwerte bleiben erhalten.</p>
+      <p class="ascend-desc">Ein Aufstieg setzt Kristalle und Labor zurück und gibt dir dauerhafte Kerne basierend auf allen jemals verdienten Kristallen. Talente und Bestwerte bleiben erhalten.</p>
       <p class="ascend-preview">Deine Kerne: <strong id="cores-balance">0</strong></p>
       <p class="ascend-preview">Verfügbar bei Aufstieg: <strong id="ascend-preview-cores">0</strong> Kerne</p>
       <button id="btn-ascend" class="primary-btn">Aufstieg durchführen</button>
@@ -176,9 +176,9 @@
   <!-- Game over modal -->
   <div id="modal-gameover" class="modal hidden">
     <div class="modal-card">
-      <h2>Turm zerstört</h2>
+      <h2>Planet überrannt</h2>
       <p>Erreichte Welle: <strong id="go-wave">1</strong></p>
-      <p>Verdiente Coins: <strong id="go-coins">0</strong></p>
+      <p>Verdiente Kristalle: <strong id="go-coins">0</strong></p>
       <button id="btn-restart" class="primary-btn">Neuer Run</button>
     </div>
   </div>

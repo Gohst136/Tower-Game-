@@ -5,56 +5,57 @@
   const OFFLINE_EFFICIENCY = 0.45; // offline cash rate vs. active rate
 
   // --- Upgrade catalogs -----------------------------------------------
-  // Workshop: reset every run, bought with Cash
+  // Werkstatt: reset every run, bought with Rohstoffe (Cash)
   const WORKSHOP_DEFS = [
-    { id: "dmg", name: "Schadensmodul", icon: "💥", desc: "+8% Turmschaden", baseCost: 10, costMult: 1.15 },
-    { id: "atk", name: "Feuerrate-Chip", icon: "⚡", desc: "+5% Angriffsgeschwindigkeit", baseCost: 15, costMult: 1.16 },
-    { id: "range", name: "Radarreichweite", icon: "📡", desc: "+6 Reichweite", baseCost: 8, costMult: 1.12 },
-    { id: "hp", name: "Panzerplatten", icon: "🛡️", desc: "+15% Maximale HP", baseCost: 10, costMult: 1.15 },
-    { id: "regen", name: "Nanoreparatur", icon: "🩹", desc: "+0.4 HP-Regeneration/Sek", baseCost: 12, costMult: 1.15 },
-    { id: "cash", name: "Cash-Extraktor", icon: "💰", desc: "+10% Cash-Gewinn", baseCost: 20, costMult: 1.2 },
+    { id: "dmg", name: "Geschützverstärkung", icon: "💥", desc: "+8% Geschützschaden", baseCost: 10, costMult: 1.15 },
+    { id: "atk", name: "Feuerleitsystem", icon: "⚡", desc: "+5% Feuerrate", baseCost: 15, costMult: 1.16 },
+    { id: "range", name: "Langstreckensensoren", icon: "📡", desc: "+6 Sensorreichweite", baseCost: 8, costMult: 1.12 },
+    { id: "hp", name: "Planetenpanzerung", icon: "🛡️", desc: "+15% Maximale Integrität", baseCost: 10, costMult: 1.15 },
+    { id: "regen", name: "Selbstheilungsmatrix", icon: "🩹", desc: "+0.4 Integritäts-Regeneration/Sek", baseCost: 12, costMult: 1.15 },
+    { id: "cash", name: "Bergbaudrohnen", icon: "💰", desc: "+10% Rohstoff-Gewinn", baseCost: 20, costMult: 1.2 },
   ];
 
-  // Lab: a timed research queue (one project at a time). Starting a project
-  // spends Coins immediately; the level is only applied once its duration
-  // has elapsed - including while the game isn't open, since completion is
-  // just an absolute-timestamp check. Persists until the next Ascension.
+  // Labor: a timed research queue (one project at a time). Starting a
+  // project spends Kristalle (Coins) immediately; the level is only applied
+  // once its duration has elapsed - including while the game isn't open,
+  // since completion is just an absolute-timestamp check. Persists until
+  // the next Aufstieg.
   const LAB_DEFS = [
-    { id: "labDmg", name: "Schadenslabor", icon: "🔬", desc: "+5% Turmschaden (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 3 },
-    { id: "labHp", name: "Rumpfverstärkung", icon: "🏰", desc: "+5% Maximale HP (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 3 },
-    { id: "labCash", name: "Handelsroute", icon: "📈", desc: "+5% Cash-Gewinn (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 4 },
-    { id: "labCoin", name: "Coin-Raffinerie", icon: "🪙", desc: "+5% Coin-Gewinn (permanent)", baseCost: 8, costMult: 1.3, baseMinutes: 8 },
-    { id: "labStart", name: "Startkapital", icon: "🏦", desc: "+25 Cash Startbonus (permanent)", baseCost: 4, costMult: 1.2, baseMinutes: 2 },
-    { id: "labRegen", name: "Auto-Reparatur", icon: "⚙️", desc: "+5% HP-Regeneration (permanent)", baseCost: 6, costMult: 1.25, baseMinutes: 5 },
+    { id: "labDmg", name: "Waffenlabor", icon: "🔬", desc: "+5% Geschützschaden (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 3 },
+    { id: "labHp", name: "Rumpfverstärkung", icon: "🏰", desc: "+5% Maximale Integrität (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 3 },
+    { id: "labCash", name: "Handelsroute", icon: "📈", desc: "+5% Rohstoff-Gewinn (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 4 },
+    { id: "labCoin", name: "Kristallraffinerie", icon: "🪙", desc: "+5% Kristall-Gewinn (permanent)", baseCost: 8, costMult: 1.3, baseMinutes: 8 },
+    { id: "labStart", name: "Vorratslager", icon: "🏦", desc: "+25 Rohstoffe Startbonus (permanent)", baseCost: 4, costMult: 1.2, baseMinutes: 2 },
+    { id: "labRegen", name: "Auto-Reparatur", icon: "⚙️", desc: "+5% Integritäts-Regeneration (permanent)", baseCost: 6, costMult: 1.25, baseMinutes: 5 },
   ];
   const RESEARCH_DURATION_MULT = 1.22; // per level, same spirit as costMult
   const MAX_RESEARCH_SECONDS = 4 * 3600; // cap a single project at 4h
 
   // Combat abilities: one active slot, equipped from whichever of these are
-  // unlocked. Nova is no longer free - every ability (including it) needs
-  // its unlock talent bought first. baseCooldown is seconds.
+  // unlocked. None are free - every ability needs its unlock talent bought
+  // first. baseCooldown is seconds.
   const ABILITY_DEFS = [
-    { id: "nova", name: "Nova", icon: "💥", desc: "Flächenschaden auf alle Gegner in Reichweite", baseCooldown: 10 },
-    { id: "shield", name: "Schutzschild", icon: "🛡️", desc: "Absorbiert Schaden für kurze Zeit", baseCooldown: 14 },
-    { id: "slow", name: "Zeitlupe", icon: "❄️", desc: "Verlangsamt alle Gegner kurzzeitig deutlich", baseCooldown: 16 },
-    { id: "chain", name: "Kettenblitz", icon: "⚡", desc: "Schaden springt zwischen mehreren Gegnern", baseCooldown: 8 },
-    { id: "repair", name: "Notreparatur", icon: "💚", desc: "Heilt den Turm sofort um einen Anteil seiner Max-HP", baseCooldown: 20 },
+    { id: "nova", name: "Sonneneruption", icon: "💥", desc: "Flächenschaden auf alle Meteore in Reichweite", baseCooldown: 10 },
+    { id: "shield", name: "Planetenschild", icon: "🛡️", desc: "Absorbiert Schaden für kurze Zeit", baseCooldown: 14 },
+    { id: "slow", name: "Gravitationsfeld", icon: "🌀", desc: "Verlangsamt alle Meteore kurzzeitig deutlich", baseCooldown: 16 },
+    { id: "chain", name: "Ionenkette", icon: "⚡", desc: "Schaden springt zwischen mehreren Meteoren", baseCooldown: 8 },
+    { id: "repair", name: "Notreparatur", icon: "💚", desc: "Repariert den Planeten sofort um einen Anteil seiner Max-Integrität", baseCooldown: 20 },
   ];
 
-  // Talents: bought with Cores (earned via Ascension), survive an Ascension.
+  // Talente: bought with Kerne (earned via Aufstieg), survive an Aufstieg.
   // Entries with an `ability` field are one-time unlocks (maxLevel 1) for
   // the matching ABILITY_DEFS entry - equip/swap happens for free afterward.
   const TALENT_DEFS = [
-    { id: "talentDmg", name: "Uraltes Wissen", icon: "📜", desc: "+3% Turmschaden (für immer)", baseCost: 3, costMult: 1.3 },
-    { id: "talentCoin", name: "Kern-Resonanz", icon: "🔮", desc: "+8% Coin-Gewinn pro Run-Ende", baseCost: 3, costMult: 1.3 },
-    { id: "talentStartCash", name: "Kopfstart", icon: "🚀", desc: "+50 Cash Startkapital pro Run", baseCost: 2, costMult: 1.25 },
+    { id: "talentDmg", name: "Alien-Technologie", icon: "📜", desc: "+3% Geschützschaden (für immer)", baseCost: 3, costMult: 1.3 },
+    { id: "talentCoin", name: "Kristallresonanz", icon: "🔮", desc: "+8% Kristall-Gewinn pro Run-Ende", baseCost: 3, costMult: 1.3 },
+    { id: "talentStartCash", name: "Vorauskommando", icon: "🚀", desc: "+50 Rohstoffe Startkapital pro Run", baseCost: 2, costMult: 1.25 },
     { id: "talentCoreGain", name: "Aufstiegs-Erfahrung", icon: "✨", desc: "+5% Kerne pro Aufstieg", baseCost: 4, costMult: 1.35 },
     { id: "talentResearchSpeed", name: "Effiziente Forschung", icon: "⏱️", desc: "+5% Forschungstempo je Stufe", baseCost: 4, costMult: 1.3 },
     { id: "talentResearchSlots", name: "Parallele Forschung", icon: "🧬", desc: "+1 gleichzeitiges Forschungsprojekt (max. 3)", baseCost: 10, costMult: 2.2, maxLevel: 2 },
-    { id: "talentAbilityNova", name: "Nova-Kern", icon: "💥", desc: "Schaltet die Fähigkeit Nova frei", baseCost: 3, costMult: 1, maxLevel: 1, ability: "nova" },
-    { id: "talentAbilityShield", name: "Schild-Kern", icon: "🛡️", desc: "Schaltet die Fähigkeit Schutzschild frei", baseCost: 5, costMult: 1, maxLevel: 1, ability: "shield" },
-    { id: "talentAbilitySlow", name: "Chrono-Kern", icon: "❄️", desc: "Schaltet die Fähigkeit Zeitlupe frei", baseCost: 5, costMult: 1, maxLevel: 1, ability: "slow" },
-    { id: "talentAbilityChain", name: "Blitz-Kern", icon: "⚡", desc: "Schaltet die Fähigkeit Kettenblitz frei", baseCost: 6, costMult: 1, maxLevel: 1, ability: "chain" },
+    { id: "talentAbilityNova", name: "Sonnen-Kern", icon: "💥", desc: "Schaltet die Fähigkeit Sonneneruption frei", baseCost: 3, costMult: 1, maxLevel: 1, ability: "nova" },
+    { id: "talentAbilityShield", name: "Schild-Kern", icon: "🛡️", desc: "Schaltet die Fähigkeit Planetenschild frei", baseCost: 5, costMult: 1, maxLevel: 1, ability: "shield" },
+    { id: "talentAbilitySlow", name: "Gravitations-Kern", icon: "🌀", desc: "Schaltet die Fähigkeit Gravitationsfeld frei", baseCost: 5, costMult: 1, maxLevel: 1, ability: "slow" },
+    { id: "talentAbilityChain", name: "Ionen-Kern", icon: "⚡", desc: "Schaltet die Fähigkeit Ionenkette frei", baseCost: 6, costMult: 1, maxLevel: 1, ability: "chain" },
     { id: "talentAbilityRepair", name: "Reparatur-Kern", icon: "💚", desc: "Schaltet die Fähigkeit Notreparatur frei", baseCost: 6, costMult: 1, maxLevel: 1, ability: "repair" },
   ];
 

@@ -4,20 +4,27 @@
       <stop offset="0%" stop-color="#101828"/>
       <stop offset="100%" stop-color="#05070c"/>
     </radialGradient>
-    <radialGradient id="core" cx="50%" cy="40%" r="60%">
-      <stop offset="0%" stop-color="#9fc4ff"/>
-      <stop offset="100%" stop-color="#3d7fff"/>
+    <radialGradient id="planet" cx="35%" cy="32%" r="70%">
+      <stop offset="0%" stop-color="#a9e4ff"/>
+      <stop offset="45%" stop-color="#3d8fdb"/>
+      <stop offset="80%" stop-color="#1c4f7a"/>
+      <stop offset="100%" stop-color="#0b2740"/>
     </radialGradient>
+    <clipPath id="planetClip">
+      <circle cx="256" cy="256" r="118"/>
+    </clipPath>
   </defs>
   <rect width="512" height="512" rx="96" fill="url(#bg)"/>
-  <circle cx="256" cy="256" r="190" fill="none" stroke="#7ea8ff" stroke-opacity="0.25" stroke-width="8" stroke-dasharray="14 18"/>
-  <circle cx="256" cy="256" r="132" fill="none" stroke="#7ea8ff" stroke-opacity="0.18" stroke-width="6"/>
-  <circle cx="256" cy="256" r="58" fill="url(#core)"/>
-  <circle cx="256" cy="256" r="58" fill="none" stroke="#e8f0ff" stroke-opacity="0.6" stroke-width="3"/>
-  <g fill="#ff6161">
-    <circle cx="120" cy="150" r="16"/>
-    <circle cx="400" cy="140" r="12"/>
-    <circle cx="410" cy="380" r="14"/>
-    <circle cx="110" cy="370" r="11"/>
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#7ea8ff" stroke-opacity="0.22" stroke-width="6" stroke-dasharray="10 16"/>
+  <circle cx="256" cy="256" r="118" fill="url(#planet)"/>
+  <g clip-path="url(#planetClip)" fill="#4fbf8a" opacity="0.7">
+    <ellipse cx="215" cy="225" rx="55" ry="34" transform="rotate(20 215 225)"/>
+    <ellipse cx="305" cy="295" rx="42" ry="26" transform="rotate(-25 305 295)"/>
+  </g>
+  <g fill="#a08a73">
+    <circle cx="118" cy="148" r="16"/>
+    <circle cx="402" cy="138" r="12"/>
+    <circle cx="412" cy="382" r="14"/>
+    <circle cx="108" cy="372" r="11"/>
   </g>
 </svg>

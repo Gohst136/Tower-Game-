@@ -1,12 +1,15 @@
 // Enemy type definitions, per-wave scaling and spawn composition. window.Enemies
 (function (global) {
+  // Planet Defender: regular enemies are meteors/comet debris, bosses are
+  // alien motherships. `shape` selects the procedural silhouette Render
+  // draws (see render.js) - purely visual, doesn't affect gameplay.
   const TYPES = {
-    grunt: { label: "Grunt", baseHp: 22, baseDmg: 3, baseSpeed: 42, baseCash: 1, radius: 9, color: "#7ea8ff" },
-    runner: { label: "Runner", baseHp: 12, baseDmg: 2, baseSpeed: 78, baseCash: 1.3, radius: 7, color: "#7bf0d0" },
-    tank: { label: "Tank", baseHp: 70, baseDmg: 6, baseSpeed: 24, baseCash: 2.2, radius: 13, color: "#c98cff" },
-    shielded: { label: "Schild-Wächter", baseHp: 26, baseDmg: 4, baseSpeed: 32, baseCash: 1.8, radius: 10, color: "#4dd4ff", shieldRatio: 0.6 },
-    splitter: { label: "Spalter", baseHp: 30, baseDmg: 3, baseSpeed: 46, baseCash: 1.3, radius: 10, color: "#ffb347" },
-    boss: { label: "Boss", baseHp: 500, baseDmg: 18, baseSpeed: 20, baseCash: 25, radius: 20, color: "#ff6161" },
+    grunt: { label: "Meteor", baseHp: 22, baseDmg: 3, baseSpeed: 42, baseCash: 1, radius: 9, color: "#a08a73", shape: "rock" },
+    runner: { label: "Kometensplitter", baseHp: 12, baseDmg: 2, baseSpeed: 78, baseCash: 1.3, radius: 7, color: "#bdeeff", shape: "comet" },
+    tank: { label: "Asteroidenbrocken", baseHp: 70, baseDmg: 6, baseSpeed: 24, baseCash: 2.2, radius: 13, color: "#6b5c4f", shape: "rock" },
+    shielded: { label: "Kristallmeteor", baseHp: 26, baseDmg: 4, baseSpeed: 32, baseCash: 1.8, radius: 10, color: "#c98cff", shieldRatio: 0.6, shape: "crystal" },
+    splitter: { label: "Spaltmeteor", baseHp: 30, baseDmg: 3, baseSpeed: 46, baseCash: 1.3, radius: 10, color: "#ffb347", shape: "fracture" },
+    boss: { label: "Alien-Mutterschiff", baseHp: 500, baseDmg: 18, baseSpeed: 20, baseCash: 25, radius: 20, color: "#ff5f7a", shape: "ship" },
   };
 
   const HP_GROWTH = 1.13;
@@ -42,6 +45,7 @@
       label: def.label,
       radius: def.radius,
       color: def.color,
+      shape: def.shape,
       speed: def.baseSpeed * speedMult,
       maxHp,
       damage: def.baseDmg * Math.pow(DMG_GROWTH, w) * dmgMult,

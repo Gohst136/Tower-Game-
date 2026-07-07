@@ -1,7 +1,7 @@
 {
-  "name": "Tower Idle Defense",
-  "short_name": "Tower Idle",
-  "description": "Idle Tower Defense - verteidige deinen Turm gegen endlose Wellen von Gegnern.",
+  "name": "Planet Defender",
+  "short_name": "Planet Def.",
+  "description": "Idle-Weltraumverteidigung - verteidige deinen Planeten vor endlosen Meteoriten-Wellen und Alien-Mutterschiffen.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

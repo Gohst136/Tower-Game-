@@ -62,24 +62,24 @@
 
     TUTORIAL_STEPS: [
       {
-        icon: "🏰",
-        title: "Willkommen",
-        body: "Dein Turm im Zentrum verteidigt sich automatisch gegen Wellen von Gegnern, die von allen Seiten kommen. Du musst nichts steuern – aber du kannst helfen.",
+        icon: "🪐",
+        title: "Willkommen, Kommandant",
+        body: "Dein Planet wird automatisch von Orbitalgeschützen verteidigt, während Meteore aus den Tiefen des Alls einschlagen. Du musst nichts steuern – aber du kannst helfen.",
       },
       {
         icon: "🛠️",
         title: "Werkstatt & Labor",
-        body: "In der Werkstatt kaufst du Upgrades mit Cash – sie gelten nur für den aktuellen Run. Stirbt dein Turm, verdienst du Coins. Im Labor startest du damit Forschungsprojekte, die über echte Zeit laufen (auch offline) und dauerhaft bleiben.",
+        body: "In der Werkstatt kaufst du Ausbauten mit Rohstoffen – sie gelten nur für den aktuellen Run. Wird dein Planet überrannt, verdienst du Kristalle. Im Labor startest du damit Forschungsprojekte, die über echte Zeit laufen (auch offline) und dauerhaft bleiben.",
       },
       {
         icon: "⚡",
         title: "Fähigkeiten & Zielmodus",
-        body: "Der Fähigkeiten-Knopf löst nach Aufladung einen mächtigen Effekt aus (z.B. Nova, Schild, Zeitlupe). Du schaltest Fähigkeiten im Aufstieg-Tab frei und kannst zwischen freigeschalteten wechseln. Über die Buttons oben im Kampf wählst du, welchen Gegner der Turm zuerst angreift.",
+        body: "Der Fähigkeiten-Knopf löst nach Aufladung einen mächtigen Effekt aus (z.B. Sonneneruption, Planetenschild, Gravitationsfeld). Du schaltest Fähigkeiten im Aufstieg-Tab frei und kannst zwischen freigeschalteten wechseln. Über die Buttons oben im Kampf wählst du, welchen Meteor die Geschütze zuerst angreifen.",
       },
       {
-        icon: "⭐",
+        icon: "☄️",
         title: "Aufstieg",
-        body: "Sobald du genug Coins verdient hast, schaltest du im Aufstieg-Tab dauerhafte Talente und Fähigkeiten gegen Kerne frei – das setzt Coins & Labor zurück, bleibt aber für immer. Manche Gegner haben außerdem Schilde oder teilen sich beim Tod – beobachte und reagiere!",
+        body: "Sobald du genug Kristalle verdient hast, schaltest du im Aufstieg-Tab dauerhafte Talente und Fähigkeiten gegen Kerne frei – das setzt Kristalle & Labor zurück, bleibt aber für immer. Manche Meteore haben Schilde oder brechen beim Einschlag auseinander, und alle 10 Wellen greift ein Alien-Mutterschiff an – beobachte und reagiere!",
       },
     ],
 
@@ -120,11 +120,11 @@
       el("btn-ascend").addEventListener("click", () => {
         const preview = State.pendingCores(this.state);
         if (preview <= 0) {
-          alert("Noch keine neuen Kerne verfügbar. Verdiene mehr Coins, um aufzusteigen.");
+          alert("Noch keine neuen Kerne verfügbar. Verdiene mehr Kristalle, um aufzusteigen.");
           return;
         }
         const ok = confirm(
-          `Aufstieg durchführen? Du erhältst ${preview} Kerne, verlierst aber deine aktuellen Coins (${Math.floor(this.state.coins)}), alle Labor-Stufen und ein laufendes Forschungsprojekt. Talente und Bestwerte bleiben erhalten.`
+          `Aufstieg durchführen? Du erhältst ${preview} Kerne, verlierst aber deine aktuellen Kristalle (${Math.floor(this.state.coins)}), alle Labor-Stufen und ein laufendes Forschungsprojekt. Talente und Bestwerte bleiben erhalten.`
         );
         if (!ok) return;
         const earned = this.game.ascend();
@@ -147,10 +147,10 @@
     _bindShare() {
       el("btn-share-progress").addEventListener("click", async () => {
         const s = this.state;
-        const text = `Ich habe in Tower Idle Defense Welle ${s.bestWave} erreicht und ${Utils.formatNumber(s.totalCoinsEarned)} Coins verdient! 🏰⚔️`;
+        const text = `Ich habe in Planet Defender Welle ${s.bestWave} erreicht und ${Utils.formatNumber(s.totalCoinsEarned)} Kristalle verdient! 🪐☄️`;
         if (navigator.share) {
           try {
-            await navigator.share({ title: "Tower Idle Defense", text });
+            await navigator.share({ title: "Planet Defender", text });
           } catch (e) {
             // user cancelled the share sheet - not an error
           }
@@ -543,10 +543,10 @@
       const rows = [
         ["Beste Welle", s.bestWave],
         ["Gesamt-Kills", Utils.formatNumber(s.totalKills)],
-        ["Boss-Kills", Utils.formatNumber(s.bossKills || 0)],
+        ["Mutterschiffe besiegt", Utils.formatNumber(s.bossKills || 0)],
         ["Runs gespielt", s.runsCompleted],
         ["Aufstiege", s.ascensionCount || 0],
-        ["Coins insgesamt verdient", Utils.formatNumber(s.totalCoinsEarned)],
+        ["Kristalle insgesamt verdient", Utils.formatNumber(s.totalCoinsEarned)],
         ["Login-Streak", (s.loginStreak || 0) + " Tage"],
       ];
       this.dom.statsList.innerHTML = rows
@@ -561,14 +561,14 @@
     },
 
     showAchievementToast(def) {
-      el("achievement-toast-text").textContent = `${def.label} (+${def.reward} Coins)`;
+      el("achievement-toast-text").textContent = `${def.label} (+${def.reward} Kristalle)`;
       this.dom.achievementToast.classList.remove("hidden");
       clearTimeout(this._achToastTimer);
       this._achToastTimer = setTimeout(() => this.dom.achievementToast.classList.add("hidden"), 3500);
     },
 
     showLoginToast(streak, reward) {
-      el("login-toast-text").textContent = `Tag ${streak} Login-Bonus: +${reward} Coins`;
+      el("login-toast-text").textContent = `Tag ${streak} Login-Bonus: +${reward} Kristalle`;
       this.dom.loginToast.classList.remove("hidden");
       clearTimeout(this._loginToastTimer);
       this._loginToastTimer = setTimeout(() => this.dom.loginToast.classList.add("hidden"), 4000);
@@ -596,7 +596,7 @@
     showOffline(seconds, cash) {
       const text =
         cash > 0
-          ? `Du warst ${Utils.formatTime(seconds)} weg. Dein Turm hat weiter verteidigt und ${Utils.formatNumber(cash)} Cash verdient.`
+          ? `Du warst ${Utils.formatTime(seconds)} weg. Dein Planet hat sich weiter verteidigt und ${Utils.formatNumber(cash)} Rohstoffe verdient.`
           : `Du warst ${Utils.formatTime(seconds)} weg.`;
       el("offline-text").textContent = text;
       this.dom.modalOffline.classList.remove("hidden");
