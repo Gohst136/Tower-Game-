@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0a0e17" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="description" content="Idle Tower Defense - verteidige deinen Turm gegen endlose Wellen von Gegnern." />
+<title>Tower Idle Defense</title>
+<link rel="manifest" href="manifest.json" />
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="assets/icon.svg" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<div id="app">
+
+  <!-- Top status bar -->
+  <header id="topbar">
+    <div class="stat-pill">
+      <span class="stat-label">Welle</span>
+      <span class="stat-value" id="wave-value">1</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-label">Cash</span>
+      <span class="stat-value" id="cash-value">0</span>
+    </div>
+    <div class="stat-pill coin">
+      <span class="stat-label">Coins</span>
+      <span class="stat-value" id="coins-value">0</span>
+    </div>
+  </header>
+
+  <!-- Battle view -->
+  <section id="view-battle" class="view active">
+    <div id="tower-hp-wrap">
+      <div id="tower-hp-bar"><div id="tower-hp-fill"></div></div>
+      <div id="tower-hp-text">100 / 100</div>
+    </div>
+    <canvas id="battle-canvas"></canvas>
+    <div id="dps-readout">DPS: <span id="dps-value">0</span></div>
+    <div id="run-controls">
+      <button id="btn-auto-restart" class="toggle-btn">Auto-Neustart: Aus</button>
+    </div>
+  </section>
+
+  <!-- Workshop view (run upgrades bought with cash) -->
+  <section id="view-workshop" class="view">
+    <h2 class="view-title">Werkstatt <span class="view-sub">(Cash · pro Run)</span></h2>
+    <div id="workshop-list" class="upgrade-list"></div>
+  </section>
+
+  <!-- Lab view (permanent upgrades bought with coins) -->
+  <section id="view-lab" class="view">
+    <h2 class="view-title">Labor <span class="view-sub">(Coins · permanent)</span></h2>
+    <div id="lab-list" class="upgrade-list"></div>
+  </section>
+
+  <!-- Stats / settings view -->
+  <section id="view-stats" class="view">
+    <h2 class="view-title">Statistik &amp; Einstellungen</h2>
+    <div class="stats-list" id="stats-list"></div>
+    <button id="btn-reset-save" class="danger-btn">Spielstand löschen</button>
+  </section>
+
+  <!-- Bottom tab navigation -->
+  <nav id="tabbar">
+    <button class="tab-btn active" data-view="view-battle">
+      <span class="tab-icon">⚔️</span><span class="tab-text">Kampf</span>
+    </button>
+    <button class="tab-btn" data-view="view-workshop">
+      <span class="tab-icon">🛠️</span><span class="tab-text">Werkstatt</span>
+    </button>
+    <button class="tab-btn" data-view="view-lab">
+      <span class="tab-icon">🧪</span><span class="tab-text">Labor</span>
+    </button>
+    <button class="tab-btn" data-view="view-stats">
+      <span class="tab-icon">📊</span><span class="tab-text">Statistik</span>
+    </button>
+  </nav>
+
+  <!-- Game over modal -->
+  <div id="modal-gameover" class="modal hidden">
+    <div class="modal-card">
+      <h2>Turm zerstört</h2>
+      <p>Erreichte Welle: <strong id="go-wave">1</strong></p>
+      <p>Verdiente Coins: <strong id="go-coins">0</strong></p>
+      <button id="btn-restart" class="primary-btn">Neuer Run</button>
+    </div>
+  </div>
+
+  <!-- Offline earnings modal -->
+  <div id="modal-offline" class="modal hidden">
+    <div class="modal-card">
+      <h2>Willkommen zurück</h2>
+      <p id="offline-text">Du warst weg.</p>
+      <button id="btn-offline-close" class="primary-btn">Abholen</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/state.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/tower.js"></script>
+<script src="js/render.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
