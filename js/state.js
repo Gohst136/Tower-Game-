@@ -111,6 +111,14 @@
     return Math.ceil(def.baseCost * Math.pow(def.costMult, level));
   }
 
+  // Total cost of buying `quantity` consecutive levels starting at `fromLevel`
+  // (for the 1x/10x/100x bulk-buy toggle).
+  function upgradeCostRange(def, fromLevel, quantity) {
+    let total = 0;
+    for (let i = 0; i < quantity; i++) total += upgradeCost(def, fromLevel + i);
+    return total;
+  }
+
   function getLevel(map, id) {
     return map[id] || 0;
   }
@@ -222,6 +230,7 @@
     defaultState,
     pendingCores,
     upgradeCost,
+    upgradeCostRange,
     researchDurationMs,
     researchSpeedMult,
     maxResearchSlots,

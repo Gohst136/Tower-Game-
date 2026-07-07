@@ -36,8 +36,11 @@
       this.dom.researchToast = el("research-toast");
       this.dom.abilityList = el("ability-list");
 
+      this.buyMultiplier = 1;
+
       this._bindTabs();
       this._bindRunControls();
+      this._bindBuyMultiplier();
       this._buildUpgradeList(this.dom.workshopList, State.WORKSHOP_DEFS, "workshop");
       this._buildLabList();
       this._buildUpgradeList(this.dom.talentList, this._regularTalentDefs(), "talent");
@@ -375,8 +378,9 @@
         `;
         const buyBtn = card.querySelector('[data-role="buy"]');
         buyBtn.addEventListener("click", () => {
-          const ok = kind === "talent" ? this.game.buyTalent(def.id) : this.game.buyWorkshop(def.id);
-          if (ok) {
+          const qty = kind === "workshop" ? this.buyMultiplier : 1;
+          const result = kind === "talent" ? this.game.buyTalent(def.id) : this.game.buyWorkshopMultiple(def.id, qty);
+          if (result) {
             Sfx.playPurchase();
             Utils.vibrate(8);
             this.refreshUpgradeList(container, defs, kind);
@@ -388,14 +392,26 @@
       this.refreshUpgradeList(container, defs, kind);
     },
 
+    _bindBuyMultiplier() {
+      const btn = el("btn-buy-multiplier");
+      const cycle = [1, 10, 100];
+      btn.addEventListener("click", () => {
+        const idx = cycle.indexOf(this.buyMultiplier);
+        this.buyMultiplier = cycle[(idx + 1) % cycle.length];
+        btn.textContent = this.buyMultiplier + "x";
+        this.refreshUpgradeList(this.dom.workshopList, State.WORKSHOP_DEFS, "workshop");
+      });
+    },
+
     refreshUpgradeList(container, defs, kind) {
       const wallet = kind === "talent" ? this.state.cores : this.state.run.cash;
       const levels = kind === "talent" ? this.state.talents : this.state.run.workshop;
+      const qty = kind === "workshop" ? this.buyMultiplier : 1;
       defs.forEach((def) => {
         const card = container.querySelector(`[data-id="${def.id}"]`);
         if (!card) return;
         const level = State.getLevel(levels, def.id);
-        const cost = State.upgradeCost(def, level);
+        const cost = State.upgradeCostRange(def, level, qty);
         card.querySelector('[data-role="level"]').textContent = "Stufe " + level;
         card.querySelector('[data-role="cost"]').textContent = Utils.formatNumber(cost);
         const buyBtn = card.querySelector('[data-role="buy"]');

@@ -117,6 +117,20 @@
       return true;
     },
 
+    // Buys up to `quantity` consecutive levels (1x/10x/100x toggle in the
+    // Werkstatt). Stops early if a purchase fails - but since the UI only
+    // enables the button when the full batch is affordable, that only
+    // happens if something else changed cash mid-click. Returns the count
+    // actually bought.
+    buyWorkshopMultiple(id, quantity) {
+      let bought = 0;
+      for (let i = 0; i < quantity; i++) {
+        if (!this.buyWorkshop(id)) break;
+        bought++;
+      }
+      return bought;
+    },
+
     // Starts a timed research project in a free slot (up to
     // State.maxResearchSlots(talents), unlocked via talentResearchSlots).
     // Costs Coins up front; the level only applies once checkResearch() sees
