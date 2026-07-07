@@ -22,11 +22,20 @@
       this.dom.statsList = el("stats-list");
       this.dom.modalGameover = el("modal-gameover");
       this.dom.modalOffline = el("modal-offline");
+      this.dom.eliteBadge = el("elite-badge");
+      this.dom.eliteToast = el("elite-toast");
+      this.dom.bossHpWrap = el("boss-hp-wrap");
+      this.dom.bossHpFill = el("boss-hp-fill");
+      this.dom.talentList = el("talent-list");
+      this.dom.achievementsList = el("achievements-list");
+      this.dom.achievementToast = el("achievement-toast");
+      this.dom.loginToast = el("login-toast");
 
       this._bindTabs();
       this._bindRunControls();
       this._buildUpgradeList(this.dom.workshopList, State.WORKSHOP_DEFS, "workshop");
       this._buildUpgradeList(this.dom.labList, State.LAB_DEFS, "lab");
+      this._buildUpgradeList(this.dom.talentList, State.TALENT_DEFS, "talent");
       this._bindGameover();
       this._bindOffline();
       this._bindReset();
@@ -34,7 +43,58 @@
       this._bindTargetMode();
       this._bindNova();
       this._bindSaveTransfer();
+      this._bindAscend();
+      this._bindShare();
       this.setAutoRestartLabel();
+      this.refreshAscendPreview();
+    },
+
+    _bindAscend() {
+      el("btn-ascend").addEventListener("click", () => {
+        const preview = State.pendingCores(this.state);
+        if (preview <= 0) {
+          alert("Noch keine neuen Kerne verfügbar. Verdiene mehr Coins, um aufzusteigen.");
+          return;
+        }
+        const ok = confirm(
+          `Aufstieg durchführen? Du erhältst ${preview} Kerne, verlierst aber deine aktuellen Coins (${Math.floor(this.state.coins)}) und alle Labor-Stufen. Talente und Bestwerte bleiben erhalten.`
+        );
+        if (!ok) return;
+        const earned = this.game.ascend();
+        if (earned > 0) {
+          Sfx.playAchievement();
+          this.refreshUpgradeList(this.dom.labList, State.LAB_DEFS, "lab");
+          this.refreshUpgradeList(this.dom.talentList, State.TALENT_DEFS, "talent");
+          this.refreshAscendPreview();
+          this.refreshTopbar();
+        }
+      });
+    },
+
+    refreshAscendPreview() {
+      el("ascend-preview-cores").textContent = Utils.formatNumber(State.pendingCores(this.state));
+      el("cores-balance").textContent = Utils.formatNumber(this.state.cores);
+    },
+
+    _bindShare() {
+      el("btn-share-progress").addEventListener("click", async () => {
+        const s = this.state;
+        const text = `Ich habe in Tower Idle Defense Welle ${s.bestWave} erreicht und ${Utils.formatNumber(s.totalCoinsEarned)} Coins verdient! 🏰⚔️`;
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: "Tower Idle Defense", text });
+          } catch (e) {
+            // user cancelled the share sheet - not an error
+          }
+        } else {
+          try {
+            await navigator.clipboard.writeText(text);
+            alert("In die Zwischenablage kopiert!");
+          } catch (e) {
+            alert(text);
+          }
+        }
+      });
     },
 
     _bindTargetMode() {
@@ -166,13 +226,14 @@
             <div class="upgrade-desc">${def.desc}</div>
             <div class="upgrade-level" data-role="level">Stufe 0</div>
           </div>
-          <button class="upgrade-buy ${kind === "lab" ? "lab-buy" : ""}" data-role="buy">
+          <button class="upgrade-buy ${kind !== "workshop" ? "lab-buy" : ""}" data-role="buy">
             <span data-role="cost">0</span>
           </button>
         `;
         const buyBtn = card.querySelector('[data-role="buy"]');
         buyBtn.addEventListener("click", () => {
-          const ok = kind === "lab" ? this.game.buyLab(def.id) : this.game.buyWorkshop(def.id);
+          const ok =
+            kind === "lab" ? this.game.buyLab(def.id) : kind === "talent" ? this.game.buyTalent(def.id) : this.game.buyWorkshop(def.id);
           if (ok) {
             Sfx.playPurchase();
             this.refreshUpgradeList(container, defs, kind);
@@ -185,8 +246,8 @@
     },
 
     refreshUpgradeList(container, defs, kind) {
-      const wallet = kind === "lab" ? this.state.coins : this.state.run.cash;
-      const levels = kind === "lab" ? this.state.lab : this.state.run.workshop;
+      const wallet = kind === "lab" ? this.state.coins : kind === "talent" ? this.state.cores : this.state.run.cash;
+      const levels = kind === "lab" ? this.state.lab : kind === "talent" ? this.state.talents : this.state.run.workshop;
       defs.forEach((def) => {
         const card = container.querySelector(`[data-id="${def.id}"]`);
         if (!card) return;
@@ -219,17 +280,68 @@
       this.dom.dps.textContent = Utils.formatNumber(this.dpsSmoothed);
     },
 
+    refreshElite() {
+      const elite = this.game.currentElite;
+      this.dom.eliteBadge.classList.toggle("hidden", !elite);
+      if (elite) {
+        el("elite-badge-icon").textContent = elite.icon;
+        el("elite-badge-label").textContent = elite.label;
+      }
+    },
+
+    showEliteToast(elite) {
+      el("elite-toast-icon").textContent = elite.icon;
+      el("elite-toast-text").textContent = `Elite-Welle: ${elite.label}!`;
+      this.dom.eliteToast.classList.remove("hidden");
+      clearTimeout(this._eliteToastTimer);
+      this._eliteToastTimer = setTimeout(() => {
+        this.dom.eliteToast.classList.add("hidden");
+      }, 3000);
+    },
+
+    refreshBoss() {
+      const boss = this.game.entities.find((e) => e.type === "boss");
+      this.dom.bossHpWrap.classList.toggle("hidden", !boss);
+      if (boss) {
+        const pct = Utils.clamp((boss.hp / boss.maxHp) * 100, 0, 100);
+        this.dom.bossHpFill.style.width = pct + "%";
+      }
+    },
+
     refreshStats() {
       const s = this.state;
       const rows = [
         ["Beste Welle", s.bestWave],
         ["Gesamt-Kills", Utils.formatNumber(s.totalKills)],
+        ["Boss-Kills", Utils.formatNumber(s.bossKills || 0)],
         ["Runs gespielt", s.runsCompleted],
+        ["Aufstiege", s.ascensionCount || 0],
         ["Coins insgesamt verdient", Utils.formatNumber(s.totalCoinsEarned)],
+        ["Login-Streak", (s.loginStreak || 0) + " Tage"],
       ];
       this.dom.statsList.innerHTML = rows
         .map(([label, value]) => `<div class="stats-row"><span>${label}</span><span>${value}</span></div>`)
         .join("");
+
+      this.dom.achievementsList.innerHTML = Achievements.DEFS.map((def) => {
+        const unlocked = !!(s.achievements && s.achievements[def.id]);
+        const mark = unlocked ? "✅" : "🔒";
+        return `<div class="stats-row${unlocked ? "" : " locked"}"><span>${def.icon} ${def.label}</span><span>${mark}</span></div>`;
+      }).join("");
+    },
+
+    showAchievementToast(def) {
+      el("achievement-toast-text").textContent = `${def.label} (+${def.reward} Coins)`;
+      this.dom.achievementToast.classList.remove("hidden");
+      clearTimeout(this._achToastTimer);
+      this._achToastTimer = setTimeout(() => this.dom.achievementToast.classList.add("hidden"), 3500);
+    },
+
+    showLoginToast(streak, reward) {
+      el("login-toast-text").textContent = `Tag ${streak} Login-Bonus: +${reward} Coins`;
+      this.dom.loginToast.classList.remove("hidden");
+      clearTimeout(this._loginToastTimer);
+      this._loginToastTimer = setTimeout(() => this.dom.loginToast.classList.add("hidden"), 4000);
     },
 
     _bindGameover() {

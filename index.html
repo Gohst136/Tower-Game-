@@ -22,6 +22,11 @@
     <button id="btn-dismiss-tip" aria-label="Schließen">×</button>
   </div>
 
+  <!-- Everything below anchors its absolutely-positioned overlays (badges,
+       toasts, modals-within-view) to this box, not to #app - so the
+       variable-height install tip above never throws their offsets off. -->
+  <div id="app-body">
+
   <!-- Top status bar -->
   <header id="topbar">
     <div class="stat-pill">
@@ -38,11 +43,37 @@
     </div>
   </header>
 
+  <div id="elite-badge" class="elite-badge hidden">
+    <span id="elite-badge-icon">💨</span>
+    <span id="elite-badge-label">Ansturm</span>
+  </div>
+
+  <div id="toast-stack">
+    <div id="elite-toast" class="toast elite-toast hidden">
+      <span id="elite-toast-icon">💨</span>
+      <span id="elite-toast-text">Elite-Welle: Ansturm!</span>
+    </div>
+
+    <div id="achievement-toast" class="toast achievement-toast hidden">
+      <span>🏆</span>
+      <span id="achievement-toast-text">Erfolg freigeschaltet!</span>
+    </div>
+
+    <div id="login-toast" class="toast login-toast hidden">
+      <span>📅</span>
+      <span id="login-toast-text">Tagesbonus!</span>
+    </div>
+  </div>
+
   <!-- Battle view -->
   <section id="view-battle" class="view active">
     <div id="tower-hp-wrap">
       <div id="tower-hp-bar"><div id="tower-hp-fill"></div></div>
       <div id="tower-hp-text">100 / 100</div>
+    </div>
+    <div id="boss-hp-wrap" class="hidden">
+      <div id="boss-hp-label">👑 BOSS</div>
+      <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
     </div>
     <canvas id="battle-canvas"></canvas>
     <div id="target-mode-group">
@@ -74,10 +105,25 @@
     <div id="lab-list" class="upgrade-list"></div>
   </section>
 
+  <!-- Talents view (permanent upgrades bought with cores from Ascension) -->
+  <section id="view-talents" class="view">
+    <h2 class="view-title">Aufstieg <span class="view-sub">(Kerne · für immer)</span></h2>
+    <div class="ascend-box">
+      <p class="ascend-desc">Ein Aufstieg setzt Coins und Labor zurück und gibt dir dauerhafte Kerne basierend auf allen jemals verdienten Coins. Talente und Bestwerte bleiben erhalten.</p>
+      <p class="ascend-preview">Deine Kerne: <strong id="cores-balance">0</strong></p>
+      <p class="ascend-preview">Verfügbar bei Aufstieg: <strong id="ascend-preview-cores">0</strong> Kerne</p>
+      <button id="btn-ascend" class="primary-btn">Aufstieg durchführen</button>
+    </div>
+    <div id="talent-list" class="upgrade-list"></div>
+  </section>
+
   <!-- Stats / settings view -->
   <section id="view-stats" class="view">
     <h2 class="view-title">Statistik &amp; Einstellungen</h2>
     <div class="stats-list" id="stats-list"></div>
+    <button id="btn-share-progress" class="toggle-btn wide">📤 Fortschritt teilen</button>
+    <h3 class="sub-heading">Erfolge</h3>
+    <div class="stats-list" id="achievements-list"></div>
     <div class="settings-row">
       <button id="btn-toggle-music" class="toggle-btn wide">Musik: An</button>
       <button id="btn-toggle-sfx" class="toggle-btn wide">Soundeffekte: An</button>
@@ -100,10 +146,15 @@
     <button class="tab-btn" data-view="view-lab">
       <span class="tab-icon">🧪</span><span class="tab-text">Labor</span>
     </button>
+    <button class="tab-btn" data-view="view-talents">
+      <span class="tab-icon">⭐</span><span class="tab-text">Aufstieg</span>
+    </button>
     <button class="tab-btn" data-view="view-stats">
       <span class="tab-icon">📊</span><span class="tab-text">Statistik</span>
     </button>
   </nav>
+
+  </div><!-- /#app-body -->
 
   <!-- Game over modal -->
   <div id="modal-gameover" class="modal hidden">
@@ -153,6 +204,7 @@
 <script src="js/audio.js"></script>
 <script src="js/state.js"></script>
 <script src="js/enemies.js"></script>
+<script src="js/achievements.js"></script>
 <script src="js/tower.js"></script>
 <script src="js/render.js"></script>
 <script src="js/game.js"></script>

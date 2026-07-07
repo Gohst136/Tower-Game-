@@ -13,16 +13,17 @@
   function effectiveStats(state) {
     const w = state.run.workshop;
     const lab = state.lab;
+    const talents = state.talents || {};
     const lvl = (map, id) => State.getLevel(map, id);
 
-    const dmgMult = Math.pow(1.08, lvl(w, "dmg")) * Math.pow(1.05, lvl(lab, "labDmg"));
+    const dmgMult = Math.pow(1.08, lvl(w, "dmg")) * Math.pow(1.05, lvl(lab, "labDmg")) * Math.pow(1.03, lvl(talents, "talentDmg"));
     const atkMult = Math.pow(0.95, lvl(w, "atk"));
     const rangeBonus = lvl(w, "range") * 6;
     const hpMult = Math.pow(1.15, lvl(w, "hp")) * Math.pow(1.05, lvl(lab, "labHp"));
     const regenFlat = lvl(w, "regen") * 0.4;
     const regenMult = Math.pow(1.05, lvl(lab, "labRegen"));
     const cashMult = Math.pow(1.1, lvl(w, "cash")) * Math.pow(1.05, lvl(lab, "labCash"));
-    const coinMult = Math.pow(1.05, lvl(lab, "labCoin"));
+    const coinMult = Math.pow(1.05, lvl(lab, "labCoin")) * Math.pow(1.08, lvl(talents, "talentCoin"));
 
     return {
       damage: BASE.damage * dmgMult,
@@ -32,7 +33,7 @@
       regen: (BASE.regen + regenFlat) * regenMult,
       cashMult,
       coinMult,
-      startingCash: lvl(lab, "labStart") * 25,
+      startingCash: lvl(lab, "labStart") * 25 + lvl(talents, "talentStartCash") * 50,
     };
   }
 

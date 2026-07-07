@@ -27,18 +27,22 @@
     novaCooldownMax: NOVA_COOLDOWN,
     shake: 0,
     time: 0,
+    currentElite: null,
     rateWindowCash: 0,
     rateWindowTime: 0,
     onWaveChange: null,
     onRunEnd: null,
     onCashChange: null,
     onHpChange: null,
+    onEliteStart: null,
+    onAchievement: null,
 
     init(state) {
       this.state = state;
       // Live enemies can't be restored from a save, so always begin the
       // current wave fresh when the game boots (progress numbers are kept).
-      this.spawnQueue = state.run.alive ? Enemies.waveComposition(state.run.wave) : [];
+      this.currentElite = state.run.alive && Enemies.isEliteWave(state.run.wave) ? Enemies.pickEliteModifier() : null;
+      this.spawnQueue = state.run.alive ? Enemies.waveComposition(state.run.wave, this.currentElite) : [];
       this.entities = [];
       this.flashes = [];
       this.particles = [];
@@ -47,6 +51,7 @@
       this.attackCooldown = 0;
       this.novaCooldown = 0;
       this.shake = 0;
+      this.checkAchievements();
     },
 
     startNewRun() {
@@ -67,7 +72,8 @@
       this.flashes = [];
       this.particles = [];
       this.novaRings = [];
-      this.spawnQueue = Enemies.waveComposition(1);
+      this.currentElite = null;
+      this.spawnQueue = Enemies.waveComposition(1, null);
       this.spawnTimer = 0;
       this.attackCooldown = 0;
       this.novaCooldown = 0;
@@ -101,12 +107,47 @@
       return true;
     },
 
+    buyTalent(id) {
+      const def = State.TALENT_DEFS.find((d) => d.id === id);
+      if (!def) return false;
+      const level = State.getLevel(this.state.talents, id);
+      const cost = State.upgradeCost(def, level);
+      if (this.state.cores < cost) return false;
+      this.state.cores -= cost;
+      this.state.talents[id] = level + 1;
+      return true;
+    },
+
+    // Deep reset: trades accumulated Coins + Lab levels for a lasting Cores
+    // currency spent on Talents, which survive future Ascensions. Returns
+    // the number of Cores earned, or 0 if nothing new was available yet.
+    ascend() {
+      const s = this.state;
+      const cores = State.pendingCores(s);
+      if (cores <= 0) return 0;
+      s.cores += cores;
+      s.coinsAtLastAscend = s.totalCoinsEarned;
+      s.ascensionCount = (s.ascensionCount || 0) + 1;
+      s.coins = 0;
+      s.lab = {};
+      this.startNewRun();
+      this.checkAchievements();
+      return cores;
+    },
+
     _advanceWave() {
       const s = this.state;
       s.run.wave += 1;
-      this.spawnQueue = Enemies.waveComposition(s.run.wave);
-      Sfx.playWaveStart();
+      this.currentElite = Enemies.isEliteWave(s.run.wave) ? Enemies.pickEliteModifier() : null;
+      this.spawnQueue = Enemies.waveComposition(s.run.wave, this.currentElite);
+      if (this.currentElite) {
+        Sfx.playEliteStart();
+        if (this.onEliteStart) this.onEliteStart(this.currentElite, s.run.wave);
+      } else {
+        Sfx.playWaveStart();
+      }
       if (this.onWaveChange) this.onWaveChange(s.run.wave);
+      this.checkAchievements();
     },
 
     _endRun() {
@@ -124,6 +165,7 @@
       this.flashes = [];
       this.spawnQueue = [];
       Sfx.playGameOver();
+      this.checkAchievements();
       if (this.onRunEnd) this.onRunEnd(wave, coinsEarned);
       return coinsEarned;
     },
@@ -140,8 +182,8 @@
       this.spawnTimer -= dt;
       if (this.spawnQueue.length > 0 && this.spawnTimer <= 0) {
         const type = this.spawnQueue.shift();
-        this.entities.push(this._spawnEnemy(type, s.run.wave, stats));
-        this.spawnTimer = Enemies.spawnIntervalForWave(s.run.wave);
+        this.entities.push(this._spawnEnemy(type, s.run.wave, stats, this.currentElite));
+        this.spawnTimer = Enemies.spawnIntervalForWave(s.run.wave, this.currentElite);
       }
 
       // --- movement & impacts ---
@@ -160,6 +202,19 @@
         e.y += (dy / dist) * e.speed * dt;
       }
 
+      // --- boss ranged attacks (poke the tower from a distance, not just on contact) ---
+      for (const e of this.entities) {
+        if (e.type !== "boss") continue;
+        e.rangedCooldown -= dt;
+        if (e.rangedCooldown <= 0) {
+          s.run.towerHp -= e.rangedDamage;
+          this.flashes.push({ x: e.x, y: e.y, alpha: 1, color: "#ff6161" });
+          Sfx.playBossShot();
+          this.shake = Math.min(10, this.shake + 4);
+          e.rangedCooldown = e.rangedInterval;
+        }
+      }
+
       // --- regen ---
       s.run.towerHp = Math.min(s.run.towerMaxHp, s.run.towerHp + stats.regen * dt);
 
@@ -168,7 +223,7 @@
       if (this.attackCooldown <= 0 && this.entities.length > 0) {
         const target = this._pickTarget(stats);
         if (target) {
-          target.hp -= stats.damage;
+          this._applyDamage(target, stats.damage);
           this.flashes.push({ x: target.x, y: target.y, alpha: 1 });
           Sfx.playShot();
           if (target.hp <= 0) this._killEnemy(target, stats);
@@ -244,17 +299,57 @@
       return target;
     },
 
+    _applyDamage(target, amount) {
+      if (target.shieldHp > 0) {
+        if (amount <= target.shieldHp) {
+          target.shieldHp -= amount;
+          return;
+        }
+        const remainder = amount - target.shieldHp;
+        target.shieldHp = 0;
+        target.hp -= remainder;
+      } else {
+        target.hp -= amount;
+      }
+    },
+
     _killEnemy(target, stats) {
       const s = this.state;
       const idx = this.entities.indexOf(target);
       if (idx >= 0) this.entities.splice(idx, 1);
-      const cashGain = target.cash * stats.cashMult;
+      const eliteCashMult = (this.currentElite && this.currentElite.cashMult) || 1;
+      const cashGain = target.cash * stats.cashMult * eliteCashMult;
       s.run.cash += cashGain;
       s.totalKills += 1;
       this.rateWindowCash += cashGain;
       Sfx.playKill(target.type);
       this._spawnParticles(target.x, target.y, target.color);
-      if (target.type === "boss") this.shake = Math.min(10, this.shake + 6);
+      if (target.type === "boss") {
+        this.shake = Math.min(10, this.shake + 6);
+        s.bossKills = (s.bossKills || 0) + 1;
+      }
+      if (target.type === "splitter" && !target.isSplitChild) this._spawnSplitChildren(target);
+      this.checkAchievements();
+    },
+
+    _spawnSplitChildren(target) {
+      for (let i = 0; i < 2; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const offset = 14;
+        this.entities.push({
+          type: "splitter",
+          isSplitChild: true,
+          color: target.color,
+          radius: Math.max(4, target.radius * 0.65),
+          speed: target.speed * 1.1,
+          maxHp: target.maxHp * 0.4,
+          hp: target.maxHp * 0.4,
+          damage: target.damage * 0.5,
+          cash: target.cash * 0.4,
+          x: target.x + Math.cos(angle) * offset,
+          y: target.y + Math.sin(angle) * offset,
+        });
+      }
     },
 
     _spawnParticles(x, y, color) {
@@ -284,7 +379,7 @@
       const novaRadius = stats.range * 1.5;
       const targets = this.entities.filter((e) => Math.hypot(e.x, e.y) <= novaRadius);
       targets.forEach((e) => {
-        e.hp -= novaDamage;
+        this._applyDamage(e, novaDamage);
         this.flashes.push({ x: e.x, y: e.y, alpha: 1 });
         if (e.hp <= 0) this._killEnemy(e, stats);
       });
@@ -295,11 +390,11 @@
       return true;
     },
 
-    _spawnEnemy(type, wave, stats) {
-      const enemyStats = Enemies.statsForWave(type, wave);
+    _spawnEnemy(type, wave, stats, elite) {
+      const enemyStats = Enemies.statsForWave(type, wave, elite);
       const angle = Math.random() * Math.PI * 2;
       const spawnRadius = this._worldRadius(stats);
-      return {
+      const entity = {
         type,
         color: enemyStats.color,
         radius: enemyStats.radius,
@@ -311,6 +406,21 @@
         x: Math.cos(angle) * spawnRadius,
         y: Math.sin(angle) * spawnRadius,
       };
+      if (enemyStats.shieldHp) {
+        entity.shieldHp = enemyStats.shieldHp;
+        entity.maxShieldHp = enemyStats.shieldHp;
+      }
+      if (type === "boss") {
+        entity.rangedCooldown = 3;
+        entity.rangedInterval = 3.5;
+        entity.rangedDamage = enemyStats.damage * 0.6;
+      }
+      return entity;
+    },
+
+    checkAchievements() {
+      // Fleshed out once Achievements.DEFS exists; safe no-op until then.
+      if (global.Achievements) global.Achievements.check(this.state, (a) => { if (this.onAchievement) this.onAchievement(a); });
     },
 
     setCanvasSize(width, height) {
@@ -340,12 +450,15 @@
       const shakeY = this.shake > 0 ? (Math.random() - 0.5) * this.shake : 0;
       const cx = width / 2 + shakeX, cy = height / 2 + shakeY;
       const toScreen = (x, y) => ({ x: cx + x * zoom, y: cy + y * zoom });
+      const boss = this.entities.find((e) => e.type === "boss");
       return {
         time: this.time,
         cx, cy,
         zoom,
         towerRadius: TOWER_RADIUS * zoom,
         range: stats.range * zoom,
+        elite: this.currentElite,
+        boss: boss ? { hp: boss.hp, maxHp: boss.maxHp } : null,
         enemies: this.entities.map((e) => ({ ...e, ...toScreen(e.x, e.y), radius: Math.max(3, e.radius * zoom) })),
         flashes: this.flashes.map((f) => ({ ...f, ...toScreen(f.x, f.y) })),
         particles: this.particles.map((p) => ({ ...p, ...toScreen(p.x, p.y), alpha: Math.max(0, p.life / p.maxLife) })),

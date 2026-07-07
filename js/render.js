@@ -38,13 +38,14 @@
     ctx.stroke();
     ctx.restore();
 
-    // laser flashes
+    // laser flashes (blue = tower firing, red = boss firing back)
     world.flashes.forEach((f) => {
+      const color = f.color || "#7ea8ff";
       ctx.save();
       ctx.globalAlpha = f.alpha;
-      ctx.strokeStyle = "#7ea8ff";
+      ctx.strokeStyle = color;
       ctx.lineWidth = 2.5;
-      ctx.shadowColor = "#7ea8ff";
+      ctx.shadowColor = color;
       ctx.shadowBlur = 8;
       ctx.beginPath();
       ctx.moveTo(cx, cy);
@@ -85,6 +86,15 @@
       ctx.beginPath();
       ctx.arc(e.x, e.y, e.radius, 0, Math.PI * 2);
       ctx.fill();
+
+      // shield ring (shielded enemy type, depletes before real HP)
+      if (e.maxShieldHp && e.shieldHp > 0) {
+        ctx.strokeStyle = "rgba(77,212,255,0.85)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.radius + 4, 0, Math.PI * 2 * Utils.clamp(e.shieldHp / e.maxShieldHp, 0, 1));
+        ctx.stroke();
+      }
 
       // hp bar
       const barW = e.radius * 2.4;

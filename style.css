@@ -28,6 +28,14 @@ html, body {
   background: radial-gradient(circle at 50% 30%, #101828 0%, #05070c 70%);
 }
 
+#app-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
 /* ---------- iOS install tip ---------- */
 .install-tip {
   display: flex;
@@ -55,6 +63,69 @@ html, body {
   color: #d7e2ff;
   font-size: 15px;
   line-height: 1;
+}
+
+/* ---------- Elite wave badge + toast ---------- */
+.elite-badge {
+  position: absolute;
+  top: 66px;
+  left: 12px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,99,71,0.16);
+  border: 1px solid rgba(255,140,102,0.4);
+  color: #ffb199;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 9px;
+  border-radius: 9px;
+}
+
+.elite-badge.hidden { display: none; }
+
+#toast-stack {
+  position: absolute;
+  top: 140px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: 86vw;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(30,10,20,0.92);
+  border: 1px solid rgba(255,140,102,0.5);
+  color: #ffd7c9;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+.toast.hidden { display: none; }
+
+.achievement-toast {
+  border-color: rgba(255,212,77,0.5);
+  color: #ffe9b0;
+  background: rgba(40,30,5,0.92);
+}
+
+.login-toast {
+  border-color: rgba(126,168,255,0.5);
+  color: #cfe0ff;
+  background: rgba(10,20,40,0.92);
 }
 
 /* ---------- Top bar ---------- */
@@ -154,6 +225,36 @@ html, body {
   font-size: 11px;
   color: #b7bfd1;
   margin-top: 3px;
+}
+
+#boss-hp-wrap {
+  padding: 0 14px 8px;
+}
+
+#boss-hp-wrap.hidden { display: none; }
+
+#boss-hp-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #ff9a8a;
+  margin-bottom: 3px;
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
+#boss-hp-bar {
+  height: 10px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255,97,97,0.3);
+}
+
+#boss-hp-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #7a0d0d, #ff6161);
+  transition: width 0.15s linear;
 }
 
 #battle-canvas {
@@ -268,6 +369,34 @@ html, body {
   color: #7bf0a4;
 }
 
+/* ---------- Ascend / talents ---------- */
+.ascend-box {
+  background: rgba(255,212,77,0.08);
+  border: 1px solid rgba(255,212,77,0.25);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.ascend-desc {
+  font-size: 12px;
+  color: #cfd6e6;
+  margin: 0 0 8px;
+}
+
+.ascend-preview {
+  font-size: 13px;
+  margin: 0 0 4px;
+}
+
+.ascend-preview strong { color: #ffd447; }
+
+.sub-heading {
+  font-size: 13px;
+  color: #cfd6e6;
+  margin: 14px 0 8px;
+}
+
 /* ---------- Upgrade cards ---------- */
 .upgrade-list {
   display: flex;
@@ -361,6 +490,9 @@ html, body {
 }
 
 .stats-row span:last-child { color: #ffd447; font-weight: 600; }
+
+.stats-row.locked { opacity: 0.45; }
+.stats-row.locked span:last-child { color: #cfd6e6; }
 
 .settings-row {
   display: flex;

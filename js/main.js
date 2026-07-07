@@ -12,11 +12,30 @@
 
   Game.init(state);
   Game.onRunEnd = (wave, coins) => UI.showGameover(wave, coins);
+  Game.onEliteStart = (elite) => UI.showEliteToast(elite);
+  Game.onAchievement = (def) => UI.showAchievementToast(def);
 
   UI.init(state, Game);
   UI.refreshTopbar();
   UI.refreshStats();
   UI.refreshNova();
+  UI.refreshElite();
+  UI.refreshBoss();
+
+  // Daily login bonus: a simple calendar-day comparison, no backend needed.
+  (function checkDailyLogin() {
+    const todayStr = new Date().toDateString();
+    if (state.lastLoginDate === todayStr) return;
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const wasYesterday = state.lastLoginDate === yesterday.toDateString();
+    state.loginStreak = wasYesterday ? (state.loginStreak || 0) + 1 : 1;
+    state.lastLoginDate = todayStr;
+    const reward = 10 * Math.min(state.loginStreak, 7);
+    state.coins += reward;
+    state.totalCoinsEarned += reward;
+    UI.showLoginToast(state.loginStreak, reward);
+  })();
 
   // iOS has no native install prompt, so show a one-time tip to use
   // Share -> "Zum Home-Bildschirm" for the full standalone app experience.
@@ -70,6 +89,9 @@
       UI.refreshUpgradeList(UI.dom.workshopList, State.WORKSHOP_DEFS, "workshop");
       UI.refreshUpgradeList(UI.dom.labList, State.LAB_DEFS, "lab");
       UI.refreshNova();
+      UI.refreshElite();
+      UI.refreshBoss();
+      UI.refreshAscendPreview();
       uiAccum = 0;
     }
 

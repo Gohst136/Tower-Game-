@@ -183,6 +183,58 @@
       src.stop(t + 0.5);
     },
 
+    playEliteStart() {
+      if (!this._readyForSfx()) return;
+      const ctx = this.ctx, t = ctx.currentTime;
+      [330, 415, 494, 622].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = "square";
+        osc.frequency.value = freq;
+        const start = t + i * 0.09;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.15, start + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + 0.18);
+        osc.connect(g).connect(this.sfxGain);
+        osc.start(start);
+        osc.stop(start + 0.2);
+      });
+    },
+
+    playBossShot() {
+      if (!this._readyForSfx()) return;
+      const ctx = this.ctx, t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(180, t);
+      osc.frequency.exponentialRampToValueAtTime(70, t + 0.22);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.001, t);
+      g.gain.exponentialRampToValueAtTime(0.22, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+      osc.connect(g).connect(this.sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.28);
+    },
+
+    playAchievement() {
+      if (!this._readyForSfx()) return;
+      const ctx = this.ctx, t = ctx.currentTime;
+      [523, 659, 784, 1047].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const start = t + i * 0.08;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.18, start + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+        osc.connect(g).connect(this.sfxGain);
+        osc.start(start);
+        osc.stop(start + 0.24);
+      });
+    },
+
     playGameOver() {
       if (!this._readyForSfx()) return;
       const ctx = this.ctx, t = ctx.currentTime;

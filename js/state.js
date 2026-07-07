@@ -25,6 +25,14 @@
     { id: "labRegen", name: "Auto-Reparatur", icon: "⚙️", desc: "+5% HP-Regeneration (permanent)", baseCost: 6, costMult: 1.25 },
   ];
 
+  // Talents: bought with Cores (earned via Ascension), survive an Ascension
+  const TALENT_DEFS = [
+    { id: "talentDmg", name: "Uraltes Wissen", icon: "📜", desc: "+3% Turmschaden (für immer)", baseCost: 3, costMult: 1.3 },
+    { id: "talentCoin", name: "Kern-Resonanz", icon: "🔮", desc: "+8% Coin-Gewinn pro Run-Ende", baseCost: 3, costMult: 1.3 },
+    { id: "talentStartCash", name: "Kopfstart", icon: "🚀", desc: "+50 Cash Startkapital pro Run", baseCost: 2, costMult: 1.25 },
+    { id: "talentCoreGain", name: "Aufstiegs-Erfahrung", icon: "✨", desc: "+5% Kerne pro Aufstieg", baseCost: 4, costMult: 1.35 },
+  ];
+
   function defaultState() {
     return {
       // permanent / meta
@@ -32,6 +40,7 @@
       totalCoinsEarned: 0,
       bestWave: 1,
       totalKills: 0,
+      bossKills: 0,
       runsCompleted: 0,
       lab: {}, // id -> level
       autoRestart: false,
@@ -41,6 +50,18 @@
       lastSaveTime: Date.now(),
       // recent rate tracking (for offline estimate)
       recentCashPerSecond: 0,
+      achievements: {}, // id -> true
+
+      // second prestige layer: Ascension resets coins+lab for a lasting
+      // Talent currency (Cores) that survives future Ascensions
+      cores: 0,
+      coinsAtLastAscend: 0,
+      ascensionCount: 0,
+      talents: {}, // id -> level
+
+      // daily login streak
+      lastLoginDate: null,
+      loginStreak: 0,
 
       // per-run
       run: {
@@ -128,11 +149,22 @@
     }
   }
 
+  // How many Cores an Ascension right now would grant, given coins earned
+  // since the last one. Returns 0 if nothing new has been earned.
+  function pendingCores(state) {
+    const total = Math.floor(Math.sqrt(state.totalCoinsEarned / 40));
+    const claimed = Math.floor(Math.sqrt(state.coinsAtLastAscend / 40));
+    const talentBonus = Math.pow(1.05, getLevel(state.talents, "talentCoreGain"));
+    return Math.floor((total - claimed) * talentBonus);
+  }
+
   global.State = {
     SAVE_KEY,
     WORKSHOP_DEFS,
     LAB_DEFS,
+    TALENT_DEFS,
     defaultState,
+    pendingCores,
     upgradeCost,
     getLevel,
     load,
