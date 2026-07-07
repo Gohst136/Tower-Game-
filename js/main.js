@@ -34,7 +34,7 @@
 
   function resizeCanvas() {
     const size = Render.resize(canvas);
-    Game.setSpawnRadius(Math.min(size.width, size.height) / 2 - 10);
+    Game.setCanvasSize(size.width, size.height);
     return size;
   }
   let canvasSize = resizeCanvas();

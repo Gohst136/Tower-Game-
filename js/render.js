@@ -99,7 +99,7 @@
     // tower
     ctx.save();
     const pulse = 1 + Math.sin(world.time * 3) * 0.03;
-    const towerR = 22 * pulse;
+    const towerR = (world.towerRadius || 22) * pulse;
     const grad = ctx.createRadialGradient(cx, cy, 2, cx, cy, towerR);
     grad.addColorStop(0, "#9fc4ff");
     grad.addColorStop(1, "#3d7fff");

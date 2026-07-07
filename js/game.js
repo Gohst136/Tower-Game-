@@ -6,6 +6,13 @@
   const RATE_WINDOW = 5; // seconds, for offline cash/sec estimate
   const NOVA_COOLDOWN = 10; // seconds
   const NOVA_DAMAGE_MULT = 5; // relative to a single normal shot
+  // Enemies always spawn this many world-units beyond the tower's current
+  // range, so the "approach phase" before an enemy becomes attackable stays
+  // a constant duration no matter how much Range has been upgraded. The
+  // render layer zooms out to keep this ever-growing world radius fitting
+  // the fixed screen size (see _zoomScale).
+  const RANGE_SPAWN_BUFFER = 60;
+  const MIN_ZOOM = 0.32;
 
   const Game = {
     state: null,
@@ -133,7 +140,7 @@
       this.spawnTimer -= dt;
       if (this.spawnQueue.length > 0 && this.spawnTimer <= 0) {
         const type = this.spawnQueue.shift();
-        this.entities.push(this._spawnEnemy(type, s.run.wave));
+        this.entities.push(this._spawnEnemy(type, s.run.wave, stats));
         this.spawnTimer = Enemies.spawnIntervalForWave(s.run.wave);
       }
 
@@ -288,41 +295,61 @@
       return true;
     },
 
-    _spawnEnemy(type, wave) {
-      const stats = Enemies.statsForWave(type, wave);
+    _spawnEnemy(type, wave, stats) {
+      const enemyStats = Enemies.statsForWave(type, wave);
       const angle = Math.random() * Math.PI * 2;
-      const spawnRadius = this._spawnRadius || 220;
+      const spawnRadius = this._worldRadius(stats);
       return {
         type,
-        color: stats.color,
-        radius: stats.radius,
-        speed: stats.speed,
-        maxHp: stats.maxHp,
-        hp: stats.maxHp,
-        damage: stats.damage,
-        cash: stats.cash,
+        color: enemyStats.color,
+        radius: enemyStats.radius,
+        speed: enemyStats.speed,
+        maxHp: enemyStats.maxHp,
+        hp: enemyStats.maxHp,
+        damage: enemyStats.damage,
+        cash: enemyStats.cash,
         x: Math.cos(angle) * spawnRadius,
         y: Math.sin(angle) * spawnRadius,
       };
     },
 
-    setSpawnRadius(r) {
-      this._spawnRadius = r;
+    setCanvasSize(width, height) {
+      this.canvasSize = { width, height };
+    },
+
+    _availableScreenRadius() {
+      const size = this.canvasSize || { width: 390, height: 600 };
+      return Math.min(size.width, size.height) / 2 - 10;
+    },
+
+    _worldRadius(stats) {
+      return stats.range + RANGE_SPAWN_BUFFER;
+    },
+
+    _zoomScale(stats) {
+      const zoom = this._availableScreenRadius() / this._worldRadius(stats);
+      return Utils.clamp(zoom, MIN_ZOOM, 1);
     },
 
     // Returns entities/flashes translated into screen-space for the renderer.
     worldForRender(width, height) {
+      this.setCanvasSize(width, height);
+      const stats = Tower.effectiveStats(this.state);
+      const zoom = this._zoomScale(stats);
       const shakeX = this.shake > 0 ? (Math.random() - 0.5) * this.shake : 0;
       const shakeY = this.shake > 0 ? (Math.random() - 0.5) * this.shake : 0;
       const cx = width / 2 + shakeX, cy = height / 2 + shakeY;
+      const toScreen = (x, y) => ({ x: cx + x * zoom, y: cy + y * zoom });
       return {
         time: this.time,
         cx, cy,
-        range: Tower.effectiveStats(this.state).range,
-        enemies: this.entities.map((e) => ({ ...e, x: e.x + cx, y: e.y + cy })),
-        flashes: this.flashes.map((f) => ({ ...f, x: f.x + cx, y: f.y + cy })),
-        particles: this.particles.map((p) => ({ ...p, x: p.x + cx, y: p.y + cy, alpha: Math.max(0, p.life / p.maxLife) })),
-        novaRings: this.novaRings.map((r) => ({ ...r, x: r.x + cx, y: r.y + cy })),
+        zoom,
+        towerRadius: TOWER_RADIUS * zoom,
+        range: stats.range * zoom,
+        enemies: this.entities.map((e) => ({ ...e, ...toScreen(e.x, e.y), radius: Math.max(3, e.radius * zoom) })),
+        flashes: this.flashes.map((f) => ({ ...f, ...toScreen(f.x, f.y) })),
+        particles: this.particles.map((p) => ({ ...p, ...toScreen(p.x, p.y), alpha: Math.max(0, p.life / p.maxLife) })),
+        novaRings: this.novaRings.map((r) => ({ ...r, ...toScreen(r.x, r.y), radius: r.radius * zoom })),
       };
     },
   };
