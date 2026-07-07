@@ -257,18 +257,21 @@
 
     update(dt) {
       const s = this.state;
+      // Chronobeschleuniger talent: uniformly speeds up the whole simulation.
+      dt *= State.gameSpeedMult(s.talents);
       this.time += dt;
       if (!s.run || !s.run.alive) return;
 
       const stats = Tower.effectiveStats(s);
       const cx = 0, cy = 0; // world space is tower-centered
 
-      // --- spawning ---
+      // --- spawning --- (while-loop so high speed levels don't get
+      // throttled to one spawn per rendered frame)
       this.spawnTimer -= dt;
-      if (this.spawnQueue.length > 0 && this.spawnTimer <= 0) {
+      while (this.spawnQueue.length > 0 && this.spawnTimer <= 0) {
         const type = this.spawnQueue.shift();
         this.entities.push(this._spawnEnemy(type, s.run.wave, stats, this.currentElite));
-        this.spawnTimer = Enemies.spawnIntervalForWave(s.run.wave, this.currentElite);
+        this.spawnTimer += Enemies.spawnIntervalForWave(s.run.wave, this.currentElite);
       }
 
       // --- movement & impacts ---
@@ -308,9 +311,9 @@
       // --- regen ---
       s.run.towerHp = Math.min(s.run.towerMaxHp, s.run.towerHp + stats.regen * dt);
 
-      // --- attack ---
+      // --- attack --- (while-loop, same reasoning as spawning above)
       this.attackCooldown -= dt;
-      if (this.attackCooldown <= 0 && this.entities.length > 0) {
+      while (this.attackCooldown <= 0 && this.entities.length > 0) {
         const target = this._pickTarget(stats);
         if (target) {
           this._applyDamage(target, stats.damage);
@@ -318,7 +321,7 @@
           Sfx.playShot();
           if (target.hp <= 0) this._killEnemy(target, stats);
         }
-        this.attackCooldown = stats.attackInterval;
+        this.attackCooldown += stats.attackInterval;
       }
 
       // --- ability cooldown ---

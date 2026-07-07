@@ -52,6 +52,7 @@
     { id: "talentCoreGain", name: "Aufstiegs-Erfahrung", icon: "✨", desc: "+5% Kerne pro Aufstieg", baseCost: 4, costMult: 1.35 },
     { id: "talentResearchSpeed", name: "Effiziente Forschung", icon: "⏱️", desc: "+5% Forschungstempo je Stufe", baseCost: 4, costMult: 1.3 },
     { id: "talentResearchSlots", name: "Parallele Forschung", icon: "🧬", desc: "+1 gleichzeitiges Forschungsprojekt (max. 3)", baseCost: 10, costMult: 2.2, maxLevel: 2 },
+    { id: "talentGameSpeed", name: "Chronobeschleuniger", icon: "⏩", desc: "Verdoppelt die Spielgeschwindigkeit je Stufe (2x, 4x, 8x, ...)", baseCost: 15, costMult: 3.5 },
     { id: "talentAbilityNova", name: "Sonnen-Kern", icon: "💥", desc: "Schaltet die Fähigkeit Sonneneruption frei", baseCost: 3, costMult: 1, maxLevel: 1, ability: "nova" },
     { id: "talentAbilityShield", name: "Schild-Kern", icon: "🛡️", desc: "Schaltet die Fähigkeit Planetenschild frei", baseCost: 5, costMult: 1, maxLevel: 1, ability: "shield" },
     { id: "talentAbilitySlow", name: "Gravitations-Kern", icon: "🌀", desc: "Schaltet die Fähigkeit Gravitationsfeld frei", baseCost: 5, costMult: 1, maxLevel: 1, ability: "slow" },
@@ -137,6 +138,13 @@
 
   function maxResearchSlots(talents) {
     return 1 + Utils.clamp(getLevel(talents, "talentResearchSlots"), 0, 2);
+  }
+
+  // Doubles per level (2x, 4x, 8x, ...). Exponent clamped as a safety net
+  // against absurd values from a hand-edited/imported save; the Kerne cost
+  // curve is the real practical limit during normal play.
+  function gameSpeedMult(talents) {
+    return Math.pow(2, Utils.clamp(getLevel(talents, "talentGameSpeed"), 0, 8));
   }
 
   function isAbilityUnlocked(abilityId, talents) {
@@ -234,6 +242,7 @@
     researchDurationMs,
     researchSpeedMult,
     maxResearchSlots,
+    gameSpeedMult,
     isAbilityUnlocked,
     abilityCooldown,
     getLevel,
