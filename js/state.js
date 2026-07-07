@@ -7,12 +7,12 @@
   // --- Upgrade catalogs -----------------------------------------------
   // Werkstatt: reset every run, bought with Rohstoffe (Cash)
   const WORKSHOP_DEFS = [
-    { id: "dmg", name: "Geschützverstärkung", icon: "💥", desc: "+8% Geschützschaden", baseCost: 10, costMult: 1.15 },
-    { id: "atk", name: "Feuerleitsystem", icon: "⚡", desc: "+5% Feuerrate", baseCost: 15, costMult: 1.16 },
-    { id: "range", name: "Langstreckensensoren", icon: "📡", desc: "+6 Sensorreichweite", baseCost: 8, costMult: 1.12 },
-    { id: "hp", name: "Planetenpanzerung", icon: "🛡️", desc: "+15% Maximale Integrität", baseCost: 10, costMult: 1.15 },
-    { id: "regen", name: "Selbstheilungsmatrix", icon: "🩹", desc: "+0.4 Integritäts-Regeneration/Sek", baseCost: 12, costMult: 1.15 },
-    { id: "cash", name: "Bergbaudrohnen", icon: "💰", desc: "+10% Rohstoff-Gewinn", baseCost: 20, costMult: 1.2 },
+    { id: "dmg", name: "Geschützverstärkung", icon: "blast", desc: "+8% Geschützschaden", baseCost: 10, costMult: 1.15 },
+    { id: "atk", name: "Feuerleitsystem", icon: "bolt", desc: "+5% Feuerrate", baseCost: 15, costMult: 1.16 },
+    { id: "range", name: "Langstreckensensoren", icon: "radar", desc: "+6 Sensorreichweite", baseCost: 8, costMult: 1.12 },
+    { id: "hp", name: "Planetenpanzerung", icon: "shield", desc: "+15% Maximale Integrität", baseCost: 10, costMult: 1.15 },
+    { id: "regen", name: "Selbstheilungsmatrix", icon: "heal", desc: "+0.4 Integritäts-Regeneration/Sek", baseCost: 12, costMult: 1.15 },
+    { id: "cash", name: "Bergbaudrohnen", icon: "coinbag", desc: "+10% Rohstoff-Gewinn", baseCost: 20, costMult: 1.2 },
   ];
 
   // Labor: a timed research queue (one project at a time). Starting a
@@ -21,12 +21,12 @@
   // since completion is just an absolute-timestamp check. Persists until
   // the next Aufstieg.
   const LAB_DEFS = [
-    { id: "labDmg", name: "Waffenlabor", icon: "🔬", desc: "+5% Geschützschaden (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 3 },
-    { id: "labHp", name: "Rumpfverstärkung", icon: "🏰", desc: "+5% Maximale Integrität (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 3 },
-    { id: "labCash", name: "Handelsroute", icon: "📈", desc: "+5% Rohstoff-Gewinn (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 4 },
-    { id: "labCoin", name: "Kristallraffinerie", icon: "🪙", desc: "+5% Kristall-Gewinn (permanent)", baseCost: 8, costMult: 1.3, baseMinutes: 8 },
-    { id: "labStart", name: "Vorratslager", icon: "🏦", desc: "+25 Rohstoffe Startbonus (permanent)", baseCost: 4, costMult: 1.2, baseMinutes: 2 },
-    { id: "labRegen", name: "Auto-Reparatur", icon: "⚙️", desc: "+5% Integritäts-Regeneration (permanent)", baseCost: 6, costMult: 1.25, baseMinutes: 5 },
+    { id: "labDmg", name: "Waffenlabor", icon: "microscope", desc: "+5% Geschützschaden (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 3 },
+    { id: "labHp", name: "Rumpfverstärkung", icon: "fortress", desc: "+5% Maximale Integrität (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 3 },
+    { id: "labCash", name: "Handelsroute", icon: "chartup", desc: "+5% Rohstoff-Gewinn (permanent)", baseCost: 5, costMult: 1.25, baseMinutes: 4 },
+    { id: "labCoin", name: "Kristallraffinerie", icon: "coin", desc: "+5% Kristall-Gewinn (permanent)", baseCost: 8, costMult: 1.3, baseMinutes: 8 },
+    { id: "labStart", name: "Vorratslager", icon: "vault", desc: "+25 Rohstoffe Startbonus (permanent)", baseCost: 4, costMult: 1.2, baseMinutes: 2 },
+    { id: "labRegen", name: "Auto-Reparatur", icon: "gear", desc: "+5% Integritäts-Regeneration (permanent)", baseCost: 6, costMult: 1.25, baseMinutes: 5 },
   ];
   const RESEARCH_DURATION_MULT = 1.22; // per level, same spirit as costMult
   const MAX_RESEARCH_SECONDS = 4 * 3600; // cap a single project at 4h
@@ -35,29 +35,29 @@
   // unlocked. None are free - every ability needs its unlock talent bought
   // first. baseCooldown is seconds.
   const ABILITY_DEFS = [
-    { id: "nova", name: "Sonneneruption", icon: "💥", desc: "Flächenschaden auf alle Meteore in Reichweite", baseCooldown: 10 },
-    { id: "shield", name: "Planetenschild", icon: "🛡️", desc: "Absorbiert Schaden für kurze Zeit", baseCooldown: 14 },
-    { id: "slow", name: "Gravitationsfeld", icon: "🌀", desc: "Verlangsamt alle Meteore kurzzeitig deutlich", baseCooldown: 16 },
-    { id: "chain", name: "Ionenkette", icon: "⚡", desc: "Schaden springt zwischen mehreren Meteoren", baseCooldown: 8 },
-    { id: "repair", name: "Notreparatur", icon: "💚", desc: "Repariert den Planeten sofort um einen Anteil seiner Max-Integrität", baseCooldown: 20 },
+    { id: "nova", name: "Sonneneruption", icon: "blast", desc: "Flächenschaden auf alle Meteore in Reichweite", baseCooldown: 10 },
+    { id: "shield", name: "Planetenschild", icon: "shield", desc: "Absorbiert Schaden für kurze Zeit", baseCooldown: 14 },
+    { id: "slow", name: "Gravitationsfeld", icon: "vortex", desc: "Verlangsamt alle Meteore kurzzeitig deutlich", baseCooldown: 16 },
+    { id: "chain", name: "Ionenkette", icon: "bolt", desc: "Schaden springt zwischen mehreren Meteoren", baseCooldown: 8 },
+    { id: "repair", name: "Notreparatur", icon: "heart", desc: "Repariert den Planeten sofort um einen Anteil seiner Max-Integrität", baseCooldown: 20 },
   ];
 
   // Talente: bought with Kerne (earned via Aufstieg), survive an Aufstieg.
   // Entries with an `ability` field are one-time unlocks (maxLevel 1) for
   // the matching ABILITY_DEFS entry - equip/swap happens for free afterward.
   const TALENT_DEFS = [
-    { id: "talentDmg", name: "Alien-Technologie", icon: "📜", desc: "+3% Geschützschaden (für immer)", baseCost: 3, costMult: 1.3 },
-    { id: "talentCoin", name: "Kristallresonanz", icon: "🔮", desc: "+8% Kristall-Gewinn pro Run-Ende", baseCost: 3, costMult: 1.3 },
-    { id: "talentStartCash", name: "Vorauskommando", icon: "🚀", desc: "+50 Rohstoffe Startkapital pro Run", baseCost: 2, costMult: 1.25 },
-    { id: "talentCoreGain", name: "Aufstiegs-Erfahrung", icon: "✨", desc: "+5% Kerne pro Aufstieg", baseCost: 4, costMult: 1.35 },
-    { id: "talentResearchSpeed", name: "Effiziente Forschung", icon: "⏱️", desc: "+5% Forschungstempo je Stufe", baseCost: 4, costMult: 1.3 },
-    { id: "talentResearchSlots", name: "Parallele Forschung", icon: "🧬", desc: "+1 gleichzeitiges Forschungsprojekt (max. 3)", baseCost: 10, costMult: 2.2, maxLevel: 2 },
-    { id: "talentGameSpeed", name: "Chronobeschleuniger", icon: "⏩", desc: "Verdoppelt die Spielgeschwindigkeit je Stufe (2x, 4x, 8x, ...)", baseCost: 15, costMult: 3.5 },
-    { id: "talentAbilityNova", name: "Sonnen-Kern", icon: "💥", desc: "Schaltet die Fähigkeit Sonneneruption frei", baseCost: 3, costMult: 1, maxLevel: 1, ability: "nova" },
-    { id: "talentAbilityShield", name: "Schild-Kern", icon: "🛡️", desc: "Schaltet die Fähigkeit Planetenschild frei", baseCost: 5, costMult: 1, maxLevel: 1, ability: "shield" },
-    { id: "talentAbilitySlow", name: "Gravitations-Kern", icon: "🌀", desc: "Schaltet die Fähigkeit Gravitationsfeld frei", baseCost: 5, costMult: 1, maxLevel: 1, ability: "slow" },
-    { id: "talentAbilityChain", name: "Ionen-Kern", icon: "⚡", desc: "Schaltet die Fähigkeit Ionenkette frei", baseCost: 6, costMult: 1, maxLevel: 1, ability: "chain" },
-    { id: "talentAbilityRepair", name: "Reparatur-Kern", icon: "💚", desc: "Schaltet die Fähigkeit Notreparatur frei", baseCost: 6, costMult: 1, maxLevel: 1, ability: "repair" },
+    { id: "talentDmg", name: "Alien-Technologie", icon: "scroll", desc: "+3% Geschützschaden (für immer)", baseCost: 3, costMult: 1.3 },
+    { id: "talentCoin", name: "Kristallresonanz", icon: "orb", desc: "+8% Kristall-Gewinn pro Run-Ende", baseCost: 3, costMult: 1.3 },
+    { id: "talentStartCash", name: "Vorauskommando", icon: "rocket", desc: "+50 Rohstoffe Startkapital pro Run", baseCost: 2, costMult: 1.25 },
+    { id: "talentCoreGain", name: "Aufstiegs-Erfahrung", icon: "sparkle", desc: "+5% Kerne pro Aufstieg", baseCost: 4, costMult: 1.35 },
+    { id: "talentResearchSpeed", name: "Effiziente Forschung", icon: "clock", desc: "+5% Forschungstempo je Stufe", baseCost: 4, costMult: 1.3 },
+    { id: "talentResearchSlots", name: "Parallele Forschung", icon: "dna", desc: "+1 gleichzeitiges Forschungsprojekt (max. 3)", baseCost: 10, costMult: 2.2, maxLevel: 2 },
+    { id: "talentGameSpeed", name: "Chronobeschleuniger", icon: "fastforward", desc: "Verdoppelt die Spielgeschwindigkeit je Stufe (2x, 4x, 8x, ...)", baseCost: 15, costMult: 3.5 },
+    { id: "talentAbilityNova", name: "Sonnen-Kern", icon: "blast", desc: "Schaltet die Fähigkeit Sonneneruption frei", baseCost: 3, costMult: 1, maxLevel: 1, ability: "nova" },
+    { id: "talentAbilityShield", name: "Schild-Kern", icon: "shield", desc: "Schaltet die Fähigkeit Planetenschild frei", baseCost: 5, costMult: 1, maxLevel: 1, ability: "shield" },
+    { id: "talentAbilitySlow", name: "Gravitations-Kern", icon: "vortex", desc: "Schaltet die Fähigkeit Gravitationsfeld frei", baseCost: 5, costMult: 1, maxLevel: 1, ability: "slow" },
+    { id: "talentAbilityChain", name: "Ionen-Kern", icon: "bolt", desc: "Schaltet die Fähigkeit Ionenkette frei", baseCost: 6, costMult: 1, maxLevel: 1, ability: "chain" },
+    { id: "talentAbilityRepair", name: "Reparatur-Kern", icon: "heart", desc: "Schaltet die Fähigkeit Notreparatur frei", baseCost: 6, costMult: 1, maxLevel: 1, ability: "repair" },
   ];
 
   // Planeten: alternate home planets, unlocked permanently by Ascension
@@ -66,10 +66,10 @@
   // and Kerne earned - a deliberate "die faster, earn more" difficulty knob
   // on top of the normal progression.
   const PLANET_DEFS = [
-    { id: "ursprung", name: "Ursprungsplanet", icon: "🪐", desc: "Heimatwelt. Ausgangspunkt jeder Verteidigung.", unlockAscensions: 0, multishot: 1, spawnRateMult: 1, coinMult: 1, coreMult: 1 },
-    { id: "kepler", name: "Kolonie Kepler", icon: "🌍", desc: "Mehrfachschuss (2 Ziele) und höhere Spawnrate. +30% Kristalle, +20% Kerne.", unlockAscensions: 3, multishot: 2, spawnRateMult: 0.8, coinMult: 1.3, coreMult: 1.2 },
-    { id: "trappist", name: "Vorposten Trappist", icon: "🌑", desc: "Mehrfachschuss (3 Ziele) und stark erhöhte Spawnrate. +70% Kristalle, +50% Kerne.", unlockAscensions: 8, multishot: 3, spawnRateMult: 0.65, coinMult: 1.7, coreMult: 1.5 },
-    { id: "cygnus", name: "Kernwelt Cygnus", icon: "🔴", desc: "Mehrfachschuss (4 Ziele) und extreme Spawnrate. +120% Kristalle, +90% Kerne.", unlockAscensions: 15, multishot: 4, spawnRateMult: 0.5, coinMult: 2.2, coreMult: 1.9 },
+    { id: "ursprung", name: "Ursprungsplanet", icon: "planetRinged", desc: "Heimatwelt. Ausgangspunkt jeder Verteidigung.", unlockAscensions: 0, multishot: 1, spawnRateMult: 1, coinMult: 1, coreMult: 1 },
+    { id: "kepler", name: "Kolonie Kepler", icon: "globe", desc: "Mehrfachschuss (2 Ziele) und höhere Spawnrate. +30% Kristalle, +20% Kerne.", unlockAscensions: 3, multishot: 2, spawnRateMult: 0.8, coinMult: 1.3, coreMult: 1.2 },
+    { id: "trappist", name: "Vorposten Trappist", icon: "moon", desc: "Mehrfachschuss (3 Ziele) und stark erhöhte Spawnrate. +70% Kristalle, +50% Kerne.", unlockAscensions: 8, multishot: 3, spawnRateMult: 0.65, coinMult: 1.7, coreMult: 1.5 },
+    { id: "cygnus", name: "Kernwelt Cygnus", icon: "redplanet", desc: "Mehrfachschuss (4 Ziele) und extreme Spawnrate. +120% Kristalle, +90% Kerne.", unlockAscensions: 15, multishot: 4, spawnRateMult: 0.5, coinMult: 2.2, coreMult: 1.9 },
   ];
 
   function defaultState() {

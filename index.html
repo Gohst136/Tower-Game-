@@ -19,12 +19,12 @@
 <div id="app">
 
   <div id="ios-install-tip" class="install-tip hidden">
-    <span>📲 Tipp: Teilen-Symbol antippen &rarr; <strong>„Zum Home-Bildschirm"</strong> für das volle App-Erlebnis</span>
+    <span><span class="inline-icon" data-icon="phone"></span> Tipp: Teilen-Symbol antippen &rarr; <strong>„Zum Home-Bildschirm"</strong> für das volle App-Erlebnis</span>
     <button id="btn-dismiss-tip" aria-label="Schließen">×</button>
   </div>
 
   <div id="android-install-tip" class="install-tip hidden">
-    <span>📲 Planet Defender als App installieren?</span>
+    <span><span class="inline-icon" data-icon="phone"></span> Planet Defender als App installieren?</span>
     <button id="btn-install-android" class="install-action-btn">Installieren</button>
     <button id="btn-dismiss-android-tip" aria-label="Schließen">×</button>
   </div>
@@ -51,28 +51,28 @@
   </header>
 
   <div id="elite-badge" class="elite-badge hidden">
-    <span id="elite-badge-icon">💨</span>
+    <span id="elite-badge-icon" data-icon="wind"></span>
     <span id="elite-badge-label">Ansturm</span>
   </div>
 
   <div id="toast-stack">
     <div id="elite-toast" class="toast elite-toast hidden">
-      <span id="elite-toast-icon">💨</span>
+      <span id="elite-toast-icon" data-icon="wind"></span>
       <span id="elite-toast-text">Elite-Welle: Ansturm!</span>
     </div>
 
     <div id="achievement-toast" class="toast achievement-toast hidden">
-      <span>🏆</span>
+      <span class="inline-icon" data-icon="trophy"></span>
       <span id="achievement-toast-text">Erfolg freigeschaltet!</span>
     </div>
 
     <div id="login-toast" class="toast login-toast hidden">
-      <span>📅</span>
+      <span class="inline-icon" data-icon="calendar"></span>
       <span id="login-toast-text">Tagesbonus!</span>
     </div>
 
     <div id="research-toast" class="toast research-toast hidden">
-      <span>🔬</span>
+      <span class="inline-icon" data-icon="microscope"></span>
       <span id="research-toast-text">Forschung abgeschlossen!</span>
     </div>
   </div>
@@ -84,7 +84,7 @@
       <div id="tower-hp-text">100 / 100</div>
     </div>
     <div id="boss-hp-wrap" class="hidden">
-      <div id="boss-hp-label">👽 MUTTERSCHIFF</div>
+      <div id="boss-hp-label"><span class="inline-icon" data-icon="alien"></span> MUTTERSCHIFF</div>
       <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
     </div>
     <canvas id="battle-canvas"></canvas>
@@ -94,7 +94,7 @@
       <button class="target-btn" data-mode="weakest">Schwächster</button>
     </div>
     <button id="btn-ability" class="nova-btn">
-      <span id="ability-icon-label">🔒</span>
+      <span id="ability-icon-label" data-icon="lock"></span>
       <svg id="ability-ring" viewBox="0 0 40 40">
         <circle cx="20" cy="20" r="18" />
       </svg>
@@ -142,7 +142,7 @@
   <section id="view-stats" class="view">
     <h2 class="view-title">Statistik &amp; Einstellungen</h2>
     <div class="stats-list" id="stats-list"></div>
-    <button id="btn-share-progress" class="toggle-btn wide">📤 Fortschritt teilen</button>
+    <button id="btn-share-progress" class="toggle-btn wide"><span class="inline-icon" data-icon="share"></span> Fortschritt teilen</button>
     <h3 class="sub-heading">Erfolge</h3>
     <div class="stats-list" id="achievements-list"></div>
     <div class="settings-row">
@@ -159,19 +159,19 @@
   <!-- Bottom tab navigation -->
   <nav id="tabbar">
     <button class="tab-btn active" data-view="view-battle">
-      <span class="tab-icon">⚔️</span><span class="tab-text">Kampf</span>
+      <span class="tab-icon" data-icon="sword"></span><span class="tab-text">Kampf</span>
     </button>
     <button class="tab-btn" data-view="view-workshop">
-      <span class="tab-icon">🛠️</span><span class="tab-text">Werkstatt</span>
+      <span class="tab-icon" data-icon="wrench"></span><span class="tab-text">Werkstatt</span>
     </button>
     <button class="tab-btn" data-view="view-lab">
-      <span class="tab-icon">🧪</span><span class="tab-text">Labor</span>
+      <span class="tab-icon" data-icon="flask"></span><span class="tab-text">Labor</span>
     </button>
     <button class="tab-btn" data-view="view-talents">
-      <span class="tab-icon">⭐</span><span class="tab-text">Aufstieg</span>
+      <span class="tab-icon" data-icon="star"></span><span class="tab-text">Aufstieg</span>
     </button>
     <button class="tab-btn" data-view="view-stats">
-      <span class="tab-icon">📊</span><span class="tab-text">Statistik</span>
+      <span class="tab-icon" data-icon="chartbar"></span><span class="tab-text">Statistik</span>
     </button>
   </nav>
 
@@ -222,7 +222,7 @@
   <!-- First-run onboarding -->
   <div id="modal-tutorial" class="modal hidden">
     <div class="modal-card">
-      <div id="tutorial-icon" class="tutorial-icon">🏰</div>
+      <div id="tutorial-icon" class="tutorial-icon" data-icon="planetRinged"></div>
       <h2 id="tutorial-title">Willkommen</h2>
       <p id="tutorial-body">Text</p>
       <div id="tutorial-dots" class="tutorial-dots"></div>
@@ -234,6 +234,7 @@
 </div>
 
 <script src="js/utils.js"></script>
+<script src="js/icons.js"></script>
 <script src="js/audio.js"></script>
 <script src="js/state.js"></script>
 <script src="js/enemies.js"></script>

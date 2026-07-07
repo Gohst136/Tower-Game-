@@ -1,6 +1,6 @@
 // Minimal offline cache. Bump CACHE_VERSION whenever shipped files change
 // so clients pick up the new set instead of serving stale cached assets.
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const CACHE_NAME = "tower-idle-" + CACHE_VERSION;
 
 const PRECACHE_URLS = [
@@ -9,6 +9,7 @@ const PRECACHE_URLS = [
   "./style.css",
   "./manifest.json",
   "./js/utils.js",
+  "./js/icons.js",
   "./js/audio.js",
   "./js/state.js",
   "./js/enemies.js",

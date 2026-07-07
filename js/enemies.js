@@ -23,10 +23,10 @@
 
   // Random modifier rolled for elite waves; applied on top of normal scaling.
   const ELITE_MODIFIERS = [
-    { id: "rush", label: "Ansturm", icon: "💨", speedMult: 1.5, cashMult: 1.4 },
-    { id: "armored", label: "Gepanzert", icon: "🛡️", hpMult: 1.6, cashMult: 1.4 },
-    { id: "berserker", label: "Berserker", icon: "🔥", dmgMult: 1.6, cashMult: 1.4 },
-    { id: "swarm", label: "Schwarm", icon: "🐝", countMult: 1.5, spawnIntervalMult: 0.7, cashMult: 1.3 },
+    { id: "rush", label: "Ansturm", icon: "wind", speedMult: 1.5, cashMult: 1.4 },
+    { id: "armored", label: "Gepanzert", icon: "shield", hpMult: 1.6, cashMult: 1.4 },
+    { id: "berserker", label: "Berserker", icon: "flame", dmgMult: 1.6, cashMult: 1.4 },
+    { id: "swarm", label: "Schwarm", icon: "bee", countMult: 1.5, spawnIntervalMult: 0.7, cashMult: 1.3 },
   ];
   const ELITE_INTERVAL = 12;
 

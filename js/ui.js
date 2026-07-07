@@ -10,6 +10,9 @@
     init(state, game) {
       this.state = state;
       this.game = game;
+      document.querySelectorAll("[data-icon]").forEach((node) => {
+        node.innerHTML = Icons.get(node.dataset.icon);
+      });
       this.dom.wave = el("wave-value");
       this.dom.cash = el("cash-value");
       this.dom.coins = el("coins-value");
@@ -67,22 +70,22 @@
 
     TUTORIAL_STEPS: [
       {
-        icon: "🪐",
+        icon: "planetRinged",
         title: "Willkommen, Kommandant",
         body: "Dein Planet wird automatisch von Orbitalgeschützen verteidigt, während Meteore aus den Tiefen des Alls einschlagen. Du musst nichts steuern – aber du kannst helfen.",
       },
       {
-        icon: "🛠️",
+        icon: "wrench",
         title: "Werkstatt & Labor",
         body: "In der Werkstatt kaufst du Ausbauten mit Rohstoffen – sie gelten nur für den aktuellen Run. Wird dein Planet überrannt, verdienst du Kristalle. Im Labor startest du damit Forschungsprojekte, die über echte Zeit laufen (auch offline) und dauerhaft bleiben.",
       },
       {
-        icon: "⚡",
+        icon: "bolt",
         title: "Fähigkeiten & Zielmodus",
         body: "Der Fähigkeiten-Knopf löst nach Aufladung einen mächtigen Effekt aus (z.B. Sonneneruption, Planetenschild, Gravitationsfeld). Du schaltest Fähigkeiten im Aufstieg-Tab frei und kannst zwischen freigeschalteten wechseln. Über die Buttons oben im Kampf wählst du, welchen Meteor die Geschütze zuerst angreifen.",
       },
       {
-        icon: "☄️",
+        icon: "comet",
         title: "Aufstieg",
         body: "Sobald du genug Kristalle verdient hast, schaltest du im Aufstieg-Tab dauerhafte Talente und Fähigkeiten gegen Kerne frei – das setzt Kristalle & Labor zurück, bleibt aber für immer. Manche Meteore haben Schilde oder brechen beim Einschlag auseinander, und alle 10 Wellen greift ein Alien-Mutterschiff an – beobachte und reagiere!",
       },
@@ -114,7 +117,7 @@
     _renderTutorialStep() {
       const step = this.TUTORIAL_STEPS[this._tutorialStep];
       const isLast = this._tutorialStep === this.TUTORIAL_STEPS.length - 1;
-      el("tutorial-icon").textContent = step.icon;
+      el("tutorial-icon").innerHTML = Icons.get(step.icon);
       el("tutorial-title").textContent = step.title;
       el("tutorial-body").textContent = step.body;
       el("btn-tutorial-next").textContent = isLast ? "Los geht's!" : "Weiter";
@@ -201,7 +204,7 @@
         this.dom.abilityRing.style.strokeDashoffset = circumference;
         this.dom.abilityBtn.disabled = true;
         this.dom.abilityBtn.classList.remove("on-cooldown");
-        this.dom.abilityIconLabel.textContent = "🔒";
+        this.dom.abilityIconLabel.innerHTML = Icons.get("lock");
         return;
       }
 
@@ -212,7 +215,7 @@
       const ready = g.abilityReady();
       this.dom.abilityBtn.disabled = !ready;
       this.dom.abilityBtn.classList.toggle("on-cooldown", !ready);
-      this.dom.abilityIconLabel.textContent = ready ? def.icon : Math.ceil(g.abilityCooldownRemaining) + "s";
+      this.dom.abilityIconLabel.innerHTML = ready ? Icons.get(def.icon) : Math.ceil(g.abilityCooldownRemaining) + "s";
     },
 
     _buildAbilityList() {
@@ -223,7 +226,7 @@
         const card = document.createElement("div");
         card.className = "upgrade-card";
         card.innerHTML = `
-          <div class="upgrade-icon">${abilityDef.icon}</div>
+          <div class="upgrade-icon">${Icons.get(abilityDef.icon)}</div>
           <div class="upgrade-info">
             <div class="upgrade-name">${abilityDef.name}</div>
             <div class="upgrade-desc">${abilityDef.desc}</div>
@@ -283,7 +286,7 @@
         const card = document.createElement("div");
         card.className = "upgrade-card";
         card.innerHTML = `
-          <div class="upgrade-icon">${def.icon}</div>
+          <div class="upgrade-icon">${Icons.get(def.icon)}</div>
           <div class="upgrade-info">
             <div class="upgrade-name">${def.name}</div>
             <div class="upgrade-desc">${def.desc}</div>
@@ -423,7 +426,7 @@
         const card = document.createElement("div");
         card.className = "upgrade-card";
         card.innerHTML = `
-          <div class="upgrade-icon">${def.icon}</div>
+          <div class="upgrade-icon">${Icons.get(def.icon)}</div>
           <div class="upgrade-info">
             <div class="upgrade-name">${def.name}</div>
             <div class="upgrade-desc">${def.desc}</div>
@@ -483,7 +486,7 @@
         const card = document.createElement("div");
         card.className = "upgrade-card";
         card.innerHTML = `
-          <div class="upgrade-icon">${def.icon}</div>
+          <div class="upgrade-icon">${Icons.get(def.icon)}</div>
           <div class="upgrade-info">
             <div class="upgrade-name">${def.name}</div>
             <div class="upgrade-desc">${def.desc}</div>
@@ -545,7 +548,7 @@
           return `
             <div class="research-box">
               <div class="research-row">
-                <span>${def ? def.icon : "🔬"}</span>
+                <span>${Icons.get(def ? def.icon : "microscope")}</span>
                 <span>${def ? def.name : "Projekt"}</span>
                 <span>${Utils.formatTime(remaining)}</span>
               </div>
@@ -587,13 +590,13 @@
       const elite = this.game.currentElite;
       this.dom.eliteBadge.classList.toggle("hidden", !elite);
       if (elite) {
-        el("elite-badge-icon").textContent = elite.icon;
+        el("elite-badge-icon").innerHTML = Icons.get(elite.icon);
         el("elite-badge-label").textContent = elite.label;
       }
     },
 
     showEliteToast(elite) {
-      el("elite-toast-icon").textContent = elite.icon;
+      el("elite-toast-icon").innerHTML = Icons.get(elite.icon);
       el("elite-toast-text").textContent = `Elite-Welle: ${elite.label}!`;
       this.dom.eliteToast.classList.remove("hidden");
       clearTimeout(this._eliteToastTimer);
@@ -628,8 +631,8 @@
 
       this.dom.achievementsList.innerHTML = Achievements.DEFS.map((def) => {
         const unlocked = !!(s.achievements && s.achievements[def.id]);
-        const mark = unlocked ? "✅" : "🔒";
-        return `<div class="stats-row${unlocked ? "" : " locked"}"><span>${def.icon} ${def.label}</span><span>${mark}</span></div>`;
+        const mark = Icons.get(unlocked ? "check" : "lock");
+        return `<div class="stats-row${unlocked ? "" : " locked"}"><span>${Icons.get(def.icon)} ${def.label}</span><span>${mark}</span></div>`;
       }).join("");
     },
 

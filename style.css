@@ -36,6 +36,19 @@ html, body {
   position: relative;
 }
 
+/* ---------- Generated SVG icons (replace all emoji) ---------- */
+.icon-glyph {
+  width: 1.15em;
+  height: 1.15em;
+  display: inline-block;
+  vertical-align: -0.22em;
+  flex-shrink: 0;
+}
+
+.inline-icon {
+  display: inline-flex;
+}
+
 /* ---------- iOS install tip ---------- */
 .install-tip {
   display: flex;
